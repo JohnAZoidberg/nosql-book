@@ -1,7 +1,7 @@
 \chapter{Columnar Stores}
 \chapterauthor{David Marchi, Daniel Schäfer, Erik Zeiske}
 
-# Columnar Content
+# Columnar Content (Erik)
 - Types
   - Column oriented relational database
   - Wide Columnar Store

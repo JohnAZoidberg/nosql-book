@@ -2,23 +2,25 @@
 \chapterauthor{David Marchi, Daniel Schäfer, Erik Zeiske}
 
 # Content
-- Properties of Cassandra
-- Goals of Cassandra
-- Use cases of Cassandra
-- How data is saved on disk
-  - File structure (Column oriented)
-  - Distributed nature
-    - Scalability
-- Terminology
-- Differences
-  - Advantages and disadvantages summary
-  - Keep in mind
-  - CQL
-- How to model data to take advantage of Cassandra
+- Properties of Cassandra (David)
+  - Terminology
+- Goals of Cassandra (David)
+- Use cases of Cassandra (David)
+- How to model data to take advantage of Cassandra (David & Daniel)
   - Non-Goals (Things to avoid doing)
   - Goals
   - Examples
-- Setting it up
+- How data is saved on disk (Erik)
+  - File structure (Column oriented)
+- Distributedness (Erik & Daniel)
+  - How it works
+  - Scalability
+  - CAP
+- Differences (Daniel)
+  - Advantages and disadvantages summary
+  - Keep in mind
+  - CQL
+- Setting it up (Daniel)
   - Machine/topological requirements
   - Configuration
 
