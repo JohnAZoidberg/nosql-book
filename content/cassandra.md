@@ -7,6 +7,30 @@
 > commodity servers, while providing highly available service
 > with no single point of failure. \autocite{lakshman2010cassandra}
 
+https://www.youtube.com/watch?v=B_HTdrTgGNs
+- writes to a single node.
+- sequential I/O vs random I/O?
+
+Cassandra - Writes in the cluster:
+- fully distributed, no Single Point of Failure
+- partitioning:
+  - primary_key MD5 hash 
+  - token ring
+  - 128Bit nbr into 4 chunks
+  - Hash of primary_key fits into one of the chunks
+    - good distribution
+  - each node has a replication factor
+    - e.g. replication factor 3 -> data gets replicated on up to 3 nodes
+  - change to virtual nodes, MD5 ranges are smaller
+    - 
+
+Cassandra - Reads
+  - Request Hits first Node:
+    - Doesn't have the data
+    - coordinates data request and asks other nodes
+    
+
+
 - Wide Column Store
 - Distributed Data Store
 
