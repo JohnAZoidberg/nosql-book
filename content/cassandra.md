@@ -39,7 +39,7 @@ Cassandra - Reads
 - Keyspace <-> Database
 - Table
 - Column
-- Columnfamily <-> Table
+- Columnfamily <-> Table (Since Cassandra 3.0 you can use the `TABLE` keyword)
 - Node
 - Ring
 - Seed-Node
@@ -88,38 +88,53 @@ Ring
 Default is AP with eventual consistency.
 
 Custom priority can be chosen.
+% https://blog.imaginea.com/consistency-tuning-in-cassandra/
 
-## Replication Strategies
+## Replication and Replica Placement Strategies
 - SimpleStrategy (For evaluating Cassandra)
 - NetworkTopologyStrategy (For production use or for use with mixed workloads)
 
-# Differences (Daniel)
+## Consistency Level
+
+# Similarities and Differences to Other Databases(Daniel)
+The authors of Cassandra call it a "distributed storage system" that "resembles a database"\autocite{lakshman2010cassandra}.
+In many ways it does look like a classical database and can be used as such but there are some key differences that the user must be aware. This chapter lays out the similaries and differences in kind and usage of Cassandra as well as outlining benefits and drawback of those.
+Some of the points mentioned here aredescribed in more detail in their respective chapters.
+
 ## Advantages and disadvantages summary
 - Advantages
-  - Elastic Scalability - easy add or remove nodes
-  - Peer to peer instead of master slave => No single point of failure & Write to any node
+  - Elastic Scalability - easily add or remove nodes
+  - Peer to peer instead of master slave $\rightarrow$ No single point of failure & Write to any node
   - Fault tolerance to failure of individual nodes
   - Great analytics capabilities (e.g. with Hadoop, Spark, ...) [because of column orientation?]
   - Flexible data model (no strict schemas)
-  - Fast INSERT because of caching and commit logs
+  - Fast `INSERT` because of caching and commit logs
 - Disadvantages
   - CQL is SQL but stripped down
-  - Doesn't do data validation like NULL-constraint, uniqueness violations, ...
+  - Doesn't do data validation like `NULL`-constraint, uniqueness violations, ...
   - Needs repairs sometimes
   - Not ACID (No transactions)
   - Updates and deletes are slow (tombstones) TODO: Review updates
+  - Is complex to set up because of its distributed nature
 
 ## Keep in mind
-- Not relational!
-- Denormalize data => Super fast reads (no joins) but more data duplication
-- CAP: Cassandra is an available, partition-tolerant system that supports eventual consistency
-- Seed nodes are just for joining the cluster, are NOT a single point of failure
+**Not relational!** Cassandra can be used much like a traditional table based database except that it does not support relations.
+To query related data it has to be in the same table. This means that normalization is not just unnecessary but it actively hinders the effective and efficient usage of Cassandra. By implication this means that the data should be denormalized.
+The reason for this is that a partition is guaranteed to be located on a single node - because of Cassandra's distributed nature however other tables might be located physically across the globe. A join across multiple datacenter locations could not be efficient.
+% - Denormalize data => Super fast reads (no joins) but more data duplication
+
+**Seed Nodes** The architecture of Cassandra works without having a master node. All of them are equally privileged. When a new node wants to join the cluster it has to know where the others are and get in sync with them. For that purpose the new node can be give a list of *seed nodes* that it can request the information necessary to be a member of the cluster.
+
+**CAP** Cassandra is by an available, partition-tolerant system that supports eventual consistency.
+CAP can be seen as not a hard choice between three absolutes but as a continuum between all of them. Cassandra offers parameters to tune where exactly it lies on that continuum. See XXX
 
 ## CQL
 > Typically, a cluster has one keyspace per application. \autocite{datastax6cqldoc}
 
 Keyspace == Database
 Column Family == Table (Is called that in CQL 3)
+
+Be aware that CQL can also stand for "Confluence Query Language" when searching for the internet. It looks very similar to Cassandra's query language but does not share the same grammar.
 
 ### Comparison to SQL
 - No
@@ -128,38 +143,59 @@ Column Family == Table (Is called that in CQL 3)
   - `JOIN`
   - `GROUP BY`
   - `FOREIGN KEY`
+  - `AUTO INCREMENT`
+  - Logical `OR` and `NOT`, only `AND`
+- Restrictions
+  - Primary key is mandatory!
+  - `UPDATE` needs `WHERE` with primary key
+  - `WHERE` **only** works on primary key and other indexed columns
 
-- Primary key is mandatory!
+When an SQL programmer comes to Cassandra and tries to write CQL they will find it familiar. Very soon they will want to use keywords that seem fundamental to SQL but are not supported by Cassandra. The majority of these omissions are due to the fact that Cassandara does not support relations between tables.
+Without relations there is no `JOIN`, `GROUP BY` or `FOREIGN KEY`s. Sub queries are not supported becaues they would also encourage users to access multiple tables in a single query.
+Since Cassandra does not aim to guarantee constant consistency it also cannot provide transactions.
+
+Because data can be inserted into any node it does not make sense to have a automatically increasing column. Without consistency multiple nodes could assign the same index to different columns.
+To have a unique ID for a column Cassandra provides the `UUID` column type instead that is long enough so that it can be randomly assigned and be practically guaranteed to be different for new inserts at each node.
+
 - Creating Keyspace(Database) requires replication strategy
-- Logical operators only `AND` no `OR` or `NOT`
-- `WHERE` only works on primary key and other indexed columns
-- `UPDATE` needs `WHERE` with primary key
 - `UPDATE` inserts if row is not yet there
 - `INSERT` replaces if row is already there
+- No unique constraint
 - `INSERT INTO xxx JSON`
 - `SELECT JSON`
 - `USING TTL` - set expiry date of row
 
+When inserting or updating data Cassandra does not perform a read. This leads to the unability to check for a uniqueness constraint. Updating without reading means that the datastore is appended and the old column is left as is. Because of these similarities between inserting and updating they are bosth collectively called *upserting*.
+
 ### Column types
-- Collections
-  - List
-  - Map
-  - Set
 - Common DB Types
-- Tuple
   - Blob
   - Boolean
   - Numbers
   - Strings
   - Time/Date values
+- Collections
+  - List
+  - Map
+  - Set
+- Tuple
 - Counter
 - IP-Address
 - Java Types
 - UUID
 
-How to use collections
+Cassandra supports the different kinds of regular data types like booleans, string-, number- and date-types.
+
+**Collections** Foo
+Frozen blabla.
+
+**Counter** Cannot be set, only incremented or decremented. All columns in the table have to be counters. Cannot be primary or partition key. Cannot be used with index or TTL.
+
+**Java Types** Because Cassandra is implemented in Java and commonly used in conjunction with other Apache projects written in Java the column types can also be chosen from some Java types. XXX
 
 ### Materialized Views
+No non materialized views!
+
 > Materialized views are suited for high cardinality data. The data in a
 > materialized view is arranged serially based on the view's primary key.
 > Materialized views cause hotspots when low cardinality data is inserted.
@@ -210,8 +246,6 @@ Memory Consumption:
 
 | Port | Description    |
 | ---- | -------------- |
-| 22   | SSH            |
-| ---- | -------------- |
 | 7000 | Inter-Node     |
 | 7001 | SSL Inter-Node |
 | 7199 | JMX Monitoring |
@@ -229,11 +263,28 @@ Memory Consumption:
 > vnodes. % https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/configVnodesEnable.html
 
 ### Security
-- Use Roles
+Security should always be kept in mind when running a program that multiple parties have access to and may be reachable over the internet. A database would be the prime target for attacks because it literally holds the data. An attacker could want to break in and change values or extract secret information.
+Cassandra can expose up to six different port, as described in XXX. If these ports don't absolutely have to be accessible from the outside, they should be blocked by the firewall, preventing potential attackers from even trying to attack Cassandra directly.
+Cassandra makes it possible for nodes to be physically distant apart, only communicate over the public internet and still belong to the same logical database cluster. In this case or in any other where the inter-node communication goes over an untrusted network, the traffic must be encrypted and authenticated with TLS. The same can and should be done for client to server communication.
+Like many other Java applications Cassandra can me controlled using the Java Management Extensions (JMX). By default they are only available on *localhost* - make sure that is the case with your installation. For convenience it is available without authentication. It is recommended to force authentication and set up a user with a password. % https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureJmxAuthentication.html
+The database itself also doesn't come with authentication configured. Again turn on forced password authentication and create a user. What's remaining is the default superuser `cassandra`. Since it cannot be deleted, it is recommended to create your own superuser with a different name, set the password of `cassandra` to something that's hard to brute-force and remove its `superuser` status. % https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureConfigNativeAuth.html
+With version 2.2 Cassandra the access control was greatly improved. It's now possible to use Role Based Access Control (RBAC) to limit what groups of users can run which commands on specific keyspaces or tables. These roles can even be hierarchical: A role can be granted all permissions of another one.
+
+In short, those items, but not limited to those, are what a Cassandra admin should tick off to make sure they did their due-diligence regarding security:
+
 - Use a firewall to not expose it to the public internet
+- Internode communication with TLS
+- Client to Node communicaiton with TLS
+- JMX management only on localhost and auth
 - Authentication with password 
-- Authorisation
-- Internode communication with SSL
-- Client to Node communicaiton with SSL
 - Disable default user
-- JMX management only on localhost
+- Use Roles
+
+# Tools
+
+- [Cassandra Reaper](http://cassandra-reaper.io/)
+- [cstar](https://labs.spotify.com/2018/09/04/introducing-cstar-the-spotify-cassandra-orchestration-tool-now-open-source/)
+- [DataStax](https://www.datastax.com/)
+
+# Conclusion
+The End
