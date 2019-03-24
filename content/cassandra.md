@@ -14,7 +14,7 @@ https://www.youtube.com/watch?v=B_HTdrTgGNs
 Cassandra - Writes in the cluster:
 - fully distributed, no Single Point of Failure
 - partitioning:
-  - primary_key MD5 hash 
+  - primary_key MD5 hash
   - token ring
   - 128Bit nbr into 4 chunks
   - Hash of primary_key fits into one of the chunks
@@ -22,13 +22,13 @@ Cassandra - Writes in the cluster:
   - each node has a replication factor
     - e.g. replication factor 3 -> data gets replicated on up to 3 nodes
   - change to virtual nodes, MD5 ranges are smaller
-    - 
+    -
 
 Cassandra - Reads
   - Request Hits first Node:
     - Doesn't have the data
     - coordinates data request and asks other nodes
-    
+
 
 
 - Wide Column Store
@@ -46,6 +46,7 @@ Cassandra - Reads
 - Tombstone
 - Repair
 - Partition
+- Partitioner
 - Primary Key
 - Partition Key
 - Static Column: A special column that is shared by all rows of a partition.
@@ -62,6 +63,14 @@ Cassandra - Reads
 # How to model data to take advantage of Cassandra (David & Daniel)
 > Writes are cheap. Write everything the way you want to read it. % https://medium.com/@alexbmeng/cassandra-query-language-cql-vs-sql-7f6ed7706b4c
 
+% https://www.scnsoft.com/blog/cassandra-performance
+
+Base assumptions:
+
+- Disk space is cheap.
+- Writes are cheap.
+- Network communication is expensive
+
 ## Non-Goals (Things to avoid doing)
 - Minimize the number of writes
 - Minimize data duplication
@@ -77,12 +86,19 @@ Cassandra - Reads
 ## SSTable
 ## File structure (Column oriented)
 ## Compaction
+Compaction strategies:
+
+- SizeTieredCompactionStrategy
+- LeveledCompactionStrategy
+- TimeWindowCompactionStrategy
+- DateTieredCompactionStrategy (deprecated in 3.0)
 
 # Distributedness (Erik & Daniel)
 ## How it works
 Ring
 
 ## Scalability
+> Adding nodes increases the disk and memory available to the cluster, and decreases the load per node.
 
 ## CAP (Consistency, Availability, Partition Tolerance)
 Default is AP with eventual consistency.
@@ -92,9 +108,24 @@ Custom priority can be chosen.
 
 ## Replication and Replica Placement Strategies
 - SimpleStrategy (For evaluating Cassandra)
+  - "The Simple Strategy orders the nodes by their initial token and places the replicas clockwise around the ring of nodes"
 - NetworkTopologyStrategy (For production use or for use with mixed workloads)
 
+## Partitioners
+% https://docs.datastax.com/en/cassandra/3.0/cassandra/architecture/archPartitionerAbout.html
+
+- Murmur3Partitioner
+- Random Partitioner
+- Byte Order Partitioner
+
 ## Consistency Level
+> The Consistency Level (CL) supplied by the client specifies how many nodes must agree for an operation to be successful.
+> For Reads this is number is known as CL.R.For Writes it is known as CL.W.
+> The common Consistency Levels are One, Quorum and All.Quorum is (N/2) +1.
+>
+> No matter what the Consistency Level, the cluster will work to Eventually make the on disk data for all replicas Consistent.
+> To get consistent behaviour for all operations ensure thatR + W > N
+% http://thelastpickle.com/files/2011-02-07-introduction-to-cassandra/introduction-to-cassandra.pdf
 
 # Similarities and Differences to Other Databases(Daniel)
 The authors of Cassandra call it a "distributed storage system" that "resembles a database"\autocite{lakshman2010cassandra}.
@@ -105,17 +136,17 @@ Some of the points mentioned here aredescribed in more detail in their respectiv
 - Advantages
   - Elastic Scalability - easily add or remove nodes
   - Peer to peer instead of master slave $\rightarrow$ No single point of failure & Write to any node
-  - Fault tolerance to failure of individual nodes
-  - Great analytics capabilities (e.g. with Hadoop, Spark, ...) [because of column orientation?]
+  - Great analytics capabilities (e.g. with Hadoop, Spark, ...) [TODO: because of column orientation?]
   - Flexible data model (no strict schemas)
-  - Fast `INSERT` because of caching and commit logs
+  - Fast writing (`INSERT`, `UPDATE`) because they are like appends (+ lots of caching layers)
+  - CQL is very similar to SQL and therefore easy to learn
 - Disadvantages
-  - CQL is SQL but stripped down
+  - CQL doesn't have a lot of reatures that people have come to expect from SQL
   - Doesn't do data validation like `NULL`-constraint, uniqueness violations, ...
   - Needs repairs sometimes
   - Not ACID (No transactions)
-  - Updates and deletes are slow (tombstones) TODO: Review updates
-  - Is complex to set up because of its distributed nature
+  - Updates and deletes make future reads slow (tombstones)
+  - Is more complex to set up because of its distributed nature
 
 ## Keep in mind
 **Not relational!** Cassandra can be used much like a traditional table based database except that it does not support relations.
@@ -135,6 +166,9 @@ Keyspace == Database
 Column Family == Table (Is called that in CQL 3)
 
 Be aware that CQL can also stand for "Confluence Query Language" when searching for the internet. It looks very similar to Cassandra's query language but does not share the same grammar.
+
+Bad Request: PRIMARY KEY column `schedule_id` cannot be restricted (preceding column `user_id` is either not restricted or by a non-EQ relation)
+% https://stackoverflow.com/questions/28565470/cassandra-primary-key-column-cannot-be-restricted
 
 ### Comparison to SQL
 - No
@@ -164,8 +198,13 @@ To have a unique ID for a column Cassandra provides the `UUID` column type inste
 - `INSERT INTO xxx JSON`
 - `SELECT JSON`
 - `USING TTL` - set expiry date of row
+- `ALLOW FILTERING`
 
-When inserting or updating data Cassandra does not perform a read. This leads to the unability to check for a uniqueness constraint. Updating without reading means that the datastore is appended and the old column is left as is. Because of these similarities between inserting and updating they are bosth collectively called *upserting*.
+When inserting or updating data Cassandra does not perform a read. This leads to the unability to check for a uniqueness constraint. Updating without reading means that the datastore is appended by a row with the new values and the old row is left as is. Because of these similarities between inserting and updating they are bosth collectively called *upserting*.
+Lots of updates to a row lead to a decrease in read performance because the database engine will have to combine the original entry together with all (partial) updates to it.
+% https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlWriteUpdate.html
+
+A delete doesn't delete the data either. The datastore is appended TODO
 
 ### Column types
 - Common DB Types
@@ -210,11 +249,17 @@ Restrictions:
 - Only one new column can be added to the materialized view's primary key. Static columns are not allowed.
 - Exclude rows with null values in the materialized view primary key column.
 
-# Index
+TODO: Don't seem to be stable or advantageous in practice. Are recommended against by most people.
+
+# Secondary Index
 % https://docs.datastax.com/en/archived/cql/3.0/cql/ddl/ddl_when_use_index_c.html
+% https://www.datastax.com/dev/blog/cassandra-native-secondary-index-deep-dive
 > Secondary indexes are suited for low cardinality data. Queries of high
 > cardinality columns on secondary indexes require Cassandra to access all
 > nodes in a cluster, causing high read latency. \autocite{cassandra3cqldoc}
+
+>  A primary index is global, whereas a secondary index is local.
+https://pantheon.io/blog/cassandra-scale-problem-secondary-indexes
 
 Don't use when:
 - Table with counter column
@@ -232,7 +277,7 @@ Don't use when:
 ## Configuration
 All config files are located in `/etc/cassandra`.
 Data is stored under `/var/lib/cassandra{cdc_raw,commitlog,data,saved_caches}`
-Memory Consumption: 
+Memory Consumption:
 
 - `cassandra.yml`: Config for Cassandra itself
   - `cluster_name`
@@ -276,7 +321,7 @@ In short, those items, but not limited to those, are what a Cassandra admin shou
 - Internode communication with TLS
 - Client to Node communicaiton with TLS
 - JMX management only on localhost and auth
-- Authentication with password 
+- Authentication with password
 - Disable default user
 - Use Roles
 
