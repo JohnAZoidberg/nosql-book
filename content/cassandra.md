@@ -34,6 +34,28 @@ Cassandra - Reads
 - Wide Column Store
 - Distributed Data Store
 
+- Distributed and Decentralized
+- Elastic Scalability
+  -> Just add another machine, Cassandra will adapt it.
+- High Availability and Fault Tolerance
+  -> Replace failed nodes in the cluster with not downtime, replicate data to multiple data centers
+- Tuneable Consistency (Cassandra often called "eventually consistent")
+  -> Strict consistency -> any read will always return the most recently written value
+  -> Causual consistency -> causal writes must be read in sequence
+  -> Weak (eventual) consistency -> all updates will propagate through all of the replicas, eventually all will be consistent
+
+"That is, a distributed database designer must choose to make the system either always readable or always writable."
+Cassandra choose to be alyways writable.
+
+=> Replicatino factor determines how much one wants to pay in performance to goin more consistency.
+#### Row-Oriented versus Column Oriented
+  "Cassandra has frequently been referred to as a “column-oriented” database, which has proved to be the source of some confusion. A column-oriented database is one in which the data is actually stored by columns, as opposed to relational databases, which store data in rows. Part of the confusion that occurs in classifying databases is that there can be a difference between the API exposed by the database and the underlying storage on disk. So Cassandra is not really column-oriented, in that its data store is not organized primarily around columns."
+
+"Cassandra stores data in a multidimensional, sorted hash table."
+
+Cassandra was developed by Facebook to solve its inbox search problem.
+
+
 ## Terminology
 % https://docs.datastax.com/en/glossary/doc/glossary/glossaryTOC.html
 - Keyspace <-> Database
@@ -57,8 +79,23 @@ Cassandra - Reads
 - Token
 
 # Goals of Cassandra (David)
-
+- Distri
 # Use cases of Cassandra (David)
+- Large Deployments
+  - ingenuety, architecture and feature set is limited when used as single-node
+  - several nodes -> might be a fit
+  - dozens of nodes -> cassandra great fit
+- Lots of Writes, Statistics and Analysis
+  - consider in respect to read / write ratio
+  - cassandra optimized for write throughput
+  - "high performance at high write volumes with many concurrent client threads" primary features of cassandra
+- Geographical Desitribution
+  - configure to replicate across multiple data centers
+  - globally deployed application
+  - putting data near user
+- Evolving Applications
+  - support for flexible schema suitable to evolve database with application
+- 
 
 # How to model data to take advantage of Cassandra (David & Daniel)
 > Writes are cheap. Write everything the way you want to read it. % https://medium.com/@alexbmeng/cassandra-query-language-cql-vs-sql-7f6ed7706b4c
@@ -70,6 +107,31 @@ Base assumptions:
 - Disk space is cheap.
 - Writes are cheap.
 - Network communication is expensive
+
+#### Design Differences Between RDBMS and Cassandra
+- no joins
+  - Cassandra has no ability to execute joins
+  - Bad solution; perform join client side
+  - Cassandra typical solution; create a denormalized second table that represents the join result
+
+- no referential integrity
+  - no concept of referential integrity across tables
+  - IDs related to other entities can be stored, but operations are not available
+
+- denormalization
+  - performes best when data model is denormalized
+
+- query-first  design
+  - start with query model instead of data model
+  - writing down most common query paths of an application will use and then create tables to support those
+
+- designing for optimal storage
+  - since tables are stored in spereate files on disk it is recommended to keep related columns defined together in the same table
+  - minimize the number of partitions that must be searched in order to fulfill a given query.
+
+- sorting a design decision
+  - sort order available on queries is fixed (determined by the selection of clustering columns supplied in the CREATE TABLE command)
+  - 
 
 ## Non-Goals (Things to avoid doing)
 - Minimize the number of writes
