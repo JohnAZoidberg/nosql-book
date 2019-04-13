@@ -203,6 +203,55 @@ After writing the data it also can be read again as shown by figure \ref{fig:cas
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
+This is the cluster architecture
+
+\newcommand{\Ray}{3cm}
+\begin{figure}[ht]
+  \begin{tikzpicture}
+    % Nodes on the circles
+    \node[circle,minimum width=2cm,minimum height=1cm,draw,name path=n1] (Node A) at (90:\Ray) {A};
+    \node[circle,minimum width=2cm,minimum height=1cm,draw,name path=n2] (Node B) at (0:\Ray) {B};
+    \node[circle,minimum width=2cm,minimum height=1cm,draw,name path=n3] (Node C) at (270:\Ray) {C};
+    \node[circle,minimum width=2cm,minimum height=1cm,draw,name path=n4] (Node C) at (180:\Ray) {D};
+
+    % Circle the nodes are placed on
+    \path[name path=c] circle (\Ray);
+    \path[name intersections={of=n1 and c,name=i1},
+          name intersections={of=n2 and c,name=i2},
+          name intersections={of=n3 and c,name=i3},
+          name intersections={of=n4 and c,name=i4}
+         ];
+
+    % Arrows between the nodes
+    \begin{scope}
+      \pgfsetarrowsend{Stealth[scale=1.5]}
+
+      \pgfpathmoveto{\pgfpointanchor{i1-2}{center}}
+      \pgfpatharcto{\Ray}{\Ray}{0}{0}{0}{\pgfpointanchor{i2-1}{center}}
+      \pgfusepath{draw}
+
+      \pgfpathmoveto{\pgfpointanchor{i2-2}{center}}
+      \pgfpatharcto{\Ray}{\Ray}{0}{0}{0}{\pgfpointanchor{i3-1}{center}}
+      \pgfusepath{draw}
+
+      \pgfpathmoveto{\pgfpointanchor{i3-2}{center}}
+      \pgfpatharcto{\Ray}{\Ray}{0}{0}{0}{\pgfpointanchor{i4-2}{center}}
+      \pgfusepath{draw}
+
+      \pgfpathmoveto{\pgfpointanchor{i4-1}{center}}
+      \pgfpatharcto{\Ray}{\Ray}{0}{0}{0}{\pgfpointanchor{i1-1}{center}}
+      \pgfusepath{draw}
+    \end{scope}
+
+    % Labels on arrows
+    \node[fill=white] at (45:\Ray) {0 to 63};
+    \node[fill=white] at (135:\Ray) {64 to 127};
+    \node[fill=white] at (225:\Ray) {128 to 191};
+    \node[fill=white] at (315:\Ray) {192 to 255};
+  \end{tikzpicture}
+  \caption{Token Ring}
+  \label{fig:cassandra:tokenring}
+\end{figure}
 
 \section{Distributed writes and reads (CAP Theorem)}
 
