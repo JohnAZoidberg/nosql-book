@@ -14,10 +14,10 @@ https://www.youtube.com/watch?v=B_HTdrTgGNs
 Cassandra - Writes in the cluster:
 - fully distributed, no Single Point of Failure
 - partitioning:
-  - primary_key MD5 hash
+  - `primary_key` MD5 hash
   - token ring
   - 128Bit nbr into 4 chunks
-  - Hash of primary_key fits into one of the chunks
+  - Hash of `primary_key` fits into one of the chunks
     - good distribution
   - each node has a replication factor
     - e.g. replication factor 3 -> data gets replicated on up to 3 nodes
@@ -28,8 +28,6 @@ Cassandra - Reads
   - Request Hits first Node:
     - Doesn't have the data
     - coordinates data request and asks other nodes
-
-
 
 - Wide Column Store
 - Distributed Data Store
@@ -58,25 +56,27 @@ Cassandra was developed by Facebook to solve its inbox search problem.
 
 ## Terminology
 % https://docs.datastax.com/en/glossary/doc/glossary/glossaryTOC.html
-- Keyspace <-> Database
-- Table
+- Bloom Filter
 - Column
 - Columnfamily <-> Table (Since Cassandra 3.0 you can use the `TABLE` keyword)
+- Compaction: Process of compacting SSTables
+- Coordinator: The node that the client talks to
+- Keyspace <-> Database
 - Node
-- Ring
-- Seed-Node
-- Tombstone
-- Repair
 - Partition
+- Partition Key
 - Partitioner
 - Primary Key
-- Partition Key
+- Repair
+- Ring
+- SSTable: File format on disk
+- Seed-Node
 - Static Column: A special column that is shared by all rows of a partition.
-- SSTable
-- Compaction
-- Zombie
-- Bloom Filter
+- Table
 - Token
+- Tombstone: Marker of a not-present (e.g. deleted) value
+- Virtual node
+- Zombie
 
 # Goals of Cassandra (David)
 - Distri
@@ -98,6 +98,12 @@ Cassandra was developed by Facebook to solve its inbox search problem.
 - 
 
 # How to model data to take advantage of Cassandra (David & Daniel)
+
+1. Determine what queries you want to support
+2. Create table according to your queries
+
+https://www.guru99.com/cassandra-data-model-rules.html
+
 > Writes are cheap. Write everything the way you want to read it. % https://medium.com/@alexbmeng/cassandra-query-language-cql-vs-sql-7f6ed7706b4c
 
 % https://www.scnsoft.com/blog/cassandra-performance
@@ -138,15 +144,87 @@ Base assumptions:
 - Minimize data duplication
 
 ## Goals
+
 - Spread data evenly around the cluster
 - Minimize the number of partitions read
+- **DENORMALIZE**
 
 ## Examples
 
+Many-to-many:
+create tables for both direction
+
 # How data is saved on disk (Erik)
 % https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlHowDataWritten.html
+
+Commit Log: https://stackoverflow.com/a/34594958/5932056
+Commit log stores updates in the order which they were processed by Cassandra
+
 ## SSTable
-## File structure (Column oriented)
+- Immutable
+  - never appended, only new ones created
+  - only deleted when a compaction occurs
+- Stores rows in sorted order
+
+**NOT** column oriented!
+Rows are stored one by one like a regular database
+
+```
+[
+  {
+    "partition" : {
+      "key" : [ "john" ],
+      "position" : 49
+    },
+    "rows" : [
+      {
+        "type" : "row",
+        "position" : 101,
+        "liveness_info" : { "tstamp" : "2019-03-29T17:56:23.935411Z" },
+        "cells" : [
+          { "name" : "email", "value" : "john@gmail.com" },
+          { "name" : "lastname", "value" : "Smith" },
+          { "name" : "name", "value" : "John" }
+        ]
+      }
+    ]
+  },
+  {
+    "rows" : [
+      {
+        "type" : "row",
+        "position" : 45,
+        "liveness_info" : { "tstamp" : "2019-04-06T18:16:33.544670Z" },
+        "cells" : [
+          { "name" : "age", "value" : 25 },
+          { "name" : "email", "deletion_info" : { "local_delete_time" : "2019-04-06T18:16:33Z" }
+          },
+          { "name" : "lastname", "value" : "Austen" },
+          { "name" : "name", "value" : "Kate" }
+        ]
+      }
+    ]
+  },
+  {
+    "partition" : {
+      "key" : [ "jack" ],
+      "position" : 102
+    },
+    "rows" : [
+      {
+        "type" : "row",
+        "position" : 150,
+        "liveness_info" : { "tstamp" : "2019-03-29T18:02:19.733455Z" },
+        "cells" : [
+          { "name" : "age", "value" : "33" },
+          { "name" : "lastname", "value" : "Sparrow" },
+          { "name" : "name", "value" : "Jack" }
+        ]
+      }
+    ]
+  }
+```
+
 ## Compaction
 Compaction strategies:
 
@@ -158,15 +236,70 @@ Compaction strategies:
 # Distributedness (Erik & Daniel)
 ## How it works
 Ring
+https://engineeringblog.yelp.com/2016/06/monitoring-cassandra-at-scale.html
+
+### Balancing
+
+Adding/Removing nodes and then rebalancing:
+
+https://www.datastax.com/dev/blog/balancing-your-cassandra-cluster
 
 ## Scalability
 > Adding nodes increases the disk and memory available to the cluster, and decreases the load per node.
 
+> Consistent hashing also minimises the key movements when nodes join or leave the cluster. On average only $k/n$ keys need to be remapped where k is the number of keys and n is the number of slots (nodes).
+https://dzone.com/articles/introduction-apache-cassandras
+
+> Cassandra uses a gossip protocol to discover node state for all nodes in a
+> cluster.  Nodes discover information about other nodes by exchanging state
+> information about themselves and other nodes they know about. This is done with
+> a maximum of 3 other nodes. Nodes do not exchange information with every other
+> node in the cluster in order to reduce network load. They just exchange
+> information with a few nodes and over a period of time state information about
+> every node propagates throughout the cluster. The gossip protocol facilitates
+> failure detection.
+https://dzone.com/articles/introduction-apache-cassandras
+
+
 ## CAP (Consistency, Availability, Partition Tolerance)
+
+> The consistency level determines the number of replicas that need to
+> acknowledge the read or write operation success to the client application. For
+> read operations, the read consistency level specifies how many replicas must
+> respond to a read request before returning data to the client application. If a
+> read operation reveals inconsistency among replicas, Cassandra initiates a read
+> repair to update the inconsistent data.
+https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html
+
 Default is AP with eventual consistency.
 
 Custom priority can be chosen.
 % https://blog.imaginea.com/consistency-tuning-in-cassandra/
+
+CP: https://stackoverflow.com/a/25043599/5932056
+
+https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlAboutDataConsistency.html
+https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html
+
+Consistency: **Hinted Handoff**
+
+Consistency Levels
+
+$$$
+quorum = (sum_of_replication_factors / 2) + 1
+$$$
+
+Default is `ONE` (High AP, little C)
+
+| Level | Description |
+| `ALL` | On all replicas |
+| `EACH_QUORUM` | Quorum of replicas in each datacenter |
+| `QUORUM` | Quorum in the entire cluster |
+| `LOCAL_QUORUM` | Quorum in the datacenter of the coordinator |
+| `ONE` | At least one replica |
+| `TWO` | At least two replicas |
+| `THREE` | At least three replicas |
+| `LOCAL_ONE` | At least one in the datacenter of the coordinator |
 
 ## Replication and Replica Placement Strategies
 - SimpleStrategy (For evaluating Cassandra)
@@ -189,6 +322,9 @@ Custom priority can be chosen.
 > To get consistent behaviour for all operations ensure thatR + W > N
 % http://thelastpickle.com/files/2011-02-07-introduction-to-cassandra/introduction-to-cassandra.pdf
 
+https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlClientRequestsRead.html
+https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlClientRequestsReadExp.html
+
 # Similarities and Differences to Other Databases(Daniel)
 The authors of Cassandra call it a "distributed storage system" that "resembles a database"\autocite{lakshman2010cassandra}.
 In many ways it does look like a classical database and can be used as such but there are some key differences that the user must be aware. This chapter lays out the similaries and differences in kind and usage of Cassandra as well as outlining benefits and drawback of those.
@@ -198,7 +334,7 @@ Some of the points mentioned here aredescribed in more detail in their respectiv
 - Advantages
   - Elastic Scalability - easily add or remove nodes
   - Peer to peer instead of master slave $\rightarrow$ No single point of failure & Write to any node
-  - Great analytics capabilities (e.g. with Hadoop, Spark, ...) [TODO: because of column orientation?]
+  - Great analytics capabilities (e.g. with Hadoop, Spark, ...)
   - Flexible data model (no strict schemas)
   - Fast writing (`INSERT`, `UPDATE`) because they are like appends (+ lots of caching layers)
   - CQL is very similar to SQL and therefore easy to learn
@@ -386,6 +522,14 @@ In short, those items, but not limited to those, are what a Cassandra admin shou
 - Authentication with password
 - Disable default user
 - Use Roles
+
+# Comparison to similar databases
+- HBase
+- DynamoDB
+- ScyllaDB
+- Google Bigtable
+- Microsoft Azure CosmosDB
+- Other NoSQL
 
 # Tools
 
