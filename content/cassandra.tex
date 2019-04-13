@@ -256,5 +256,41 @@ This is the cluster architecture
 \section{Distributed writes and reads (CAP Theorem)}
 
 \section{Setup and Configuration}  % Setup
+Cassandra is designed to be run in a cluster of multiple machines. That has to be kept in mind even when setting up a single instance. That single instance would form a single node cluster. This makes manual configuration unavoidable - every node needs to know how to join the cluster.
+For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about TODO. After joining the cluster is complete the distinction of \textit{seed nodes} is no longer relevant - all nodes are completely equal.
+
+A simple but sufficient\footnote{The other settings can be left at their defaults.} configuration of the first node would look like shown in listing~\ref{lst:cassandra:first_node_config}.
+
+\begin{listing}[ht]
+  \begin{minted}{yaml}
+# Open socket on this address
+listen_address: "192.168.0.2"
+# Tell other nodes its reachable on this address
+broadcast_address: "3.14.1.59"
+
+seed_provider:
+  - class_name: org.apache.cassandra.locator.SimpleSeedProvider
+    parameters:
+      - seeds "3.14.1.59"
+
+# Enable client communication
+start_native_transport: true
+  \end{minted}
+  \caption{Configuration of first node}
+  \label{lst:cassandra:first_node_config}
+\end{listing}
+
+For the masterless cluster to function all nodes need to be able to reach all other nodes. This is trivial if all are in the same subnet of the network. Then they can just reach each other by their IP addresses.
+When they are in different subnets however they each have a private (local to their subnet) and public (inter subnet) address. This is very often the case in public cloud offerings. There are just not enough addresses available to give every node a public one.
+Cassandra needs to know to things:
+1. On what address to listen for oncoming TPC connections. That's what \mintinline{yaml}{listen_address} is for. This is the local/private address.
+2. What address to tell other nodes it's reachable under. This is set by \mintinline{yaml}{broadcast_address} and it is the public address that all other nodes must be able to reach.
+Therefore in a local network (with no address translation between the nodes) \mintinline{yaml}{listen_address} and \mintinline{yaml}{broadcast_address} are set to the same value.
+
+In order to create a single cluster instance the node has to have its seed set to containing only its own address. Since it doesn't need to listen on a public or even private IP this should, in most cases, be \texttt{localhost}.
+The first node of a cluster can be thought of as such a single instance node until others join.
+
+In order for additional nodes to join the cluster configure them analogous to the first, changing the address values but keeping the seed list.
+Upon starting them they will automatically communicate with the seed and join the cluster.
 
 \section{Summary and Conclusion}
