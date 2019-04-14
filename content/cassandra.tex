@@ -7,12 +7,95 @@
 %- Structure
 \subsection{Abstract}
 \subsection{Overview of Cassandra}
+Cassandra is a Wide Column Store Database. It is table-like but not relational.
+The architecture and design make it a distributed and masterless data store for large data.
+It is written in Java and can be run distributed on commodity hardware.
+Since it is masterless there is no single point of failure.
+Nodes (connected instances running Cassandra) can be hot-swap like conntected to a Cassandra cluster.
+This is called elastic scalability. Adding a new node and removing one will elasticly increase or decrease
+the cluster size without any major imapct on the distributed system.
+All these features make Cassandra highly availabile and fault tolerance.
+Depening on the settings, a cluster of Cassandra nodes can be more or less consistent.
+From eventually consistent, the lowest setting for consistency, to highly consistent.
+This can be reffered to as tunable consistency and allows for a configuration depening classification in 
+the CAP Therorem. More on that in another chapter.
+
+Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved
+in the development process. Cassandra does share similarities to DynamoDB and Googles BigTable approach.
+Now it is a free software project of the Apache Foundation. Development is mainly driven by DataStax.
+A company designated for commercial Cassandra instances and enterprise support.
+
 
 \section{Wide Column Store}
 
-\section{Use-Cases Cassandra is (not) suited for}  % I don't like this title
+A wide column store is a tabular but not relational aproach to store data.
+It is not column oriented, since the rows are stored together. 
+A row can have missing columns which are not stored on disk. This makes it sparse.
+It can be thought like a key-value store where the value can have a subset of a predefined set of columns.
+Or put in other words; "Sparse, distributed multi-dimensional sorted map" \tinycite{chang2008bigtable}
+The naming can explained as a key value store with wide (complex) values that consist of columns.
 
-\section{Data Modelling}  % How to model data (or rather tables)
+
+\section{Use-Cases Cassandra}
+There are several benefits for using cassandra such as:
+\Being{itemize}
+        \item Fast writes \\ (high throughput, not latency) \\
+        (Those writes include \lstinline{INSERT} \lstinline{UPDATE} \lstinline{DELETE})
+        \item High availability
+        \item Easy (linear) horizontal scalability
+        (The inter-node communication does not increase with more nodes)
+        \item No master $\rightarrow$ \\ Read from and write to any node
+        \item Flexible schema \\ (rows can have missing columns and missing columns are not stored on disk)
+        \item Globally distributed cluster \\ (e.g. multicloud)
+        \item Query language similar SQL (CQL)
+\end{itemize}
+If any of these points apply to a project or use-case Cassandra might be a fit. 
+But to be sure it is even more important to rule out the cases where Cassandra is for sure not a fit.
+This is the case if:
+\begin{itemize}
+        \item Single system instance
+        \item Ever changing queries (The table is fine-tuned for pre defined queries)
+        \item Lots of updates and deletes interspersed with reads (This slows Cassandra down)
+        \item Transactions (ACID)
+        \item Relations (joins, ...)
+        \item Column aggregation (\lstinline{GROUP BY}) \\
+        (Being a wide cloumn oriented database, these functions are not available)
+        \item \lstinline{AUTO INCREMENT}
+        \item Data validation (e.g. \lstinline{NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
+\end{itemize}
+
+To sump it up there are general Use-Case conditions where Cassandra is a great fit.
+Envornments with these needs should find a solution with Cassandra/
+\begin{itemize}
+    \item Large Deployments
+    In order to make use of Cassandras features and benefits 
+    \item Tons of writes
+      \begin{itemize}
+        \item{"high performance at high write volumes with many concurrent client threads" \tinycite{cassandra_oreilly}}
+      \end{itemize}
+    \item Geographical distribution of data and database clients
+    \item Different columns per row
+\end{itemize}
+{Ingenuity, architecture and featureset limited when used as single-node}
+ {Several nodes? $\rightarrow$ might be a fit}
+ {Dozen of nodes? $\rightarrow$ great fit}
+
+{Consider read/write ratio}
+    <2>[item]{As mentioned, cassandra optimized for write throughput}
+    <2>[item]{Not many updates / data changes, slows read down}
+    <2>[item]{Quote; you can even write to multiple nodes with multiple threads}
+
+    <3>[item]{Globally deployed application, bring data to user}
+    <3>[item]{Configure to replicate across multiple data centers}
+
+    <4>[item]{Again: rows are sparse}
+
+
+\section{Data Modelling in Cassandra}  % How to model data (or rather tables)
+
+
+ 
+Data Modelling is different in Cassandra, compared to other Databases like traditional 
 
 \section{Using the Cassandra Query Language}  % How to use CQL
 This section will give a short overview of how to interact with a Cassandra database using the Cassandra Query Language (CQL), which is mainly inspired by the Structured Query Language (SQL) \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateKeystore}.
