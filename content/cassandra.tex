@@ -5,6 +5,9 @@
 %- History, relevance, environment, context
 %- Task, goal, why, what
 %- Structure
+Scope: TODO \\
+Cassandra can be made aware of the relative physical location of all nodes, for example in which rack or datacenter they are. For real world usage it is recommended to do that and also adjust the configuration to take that into account. For trying out Cassandra on a single node or a small local cluster however all of those settings can be left at their defaults. To keep this chapter at a manageable size we will not explain the topological features, only mention that they are available.
+
 \subsection{Abstract}
 \subsection{Overview of Cassandra}
 Cassandra is a Wide Column Store Database. It is table-like but not relational.
@@ -203,7 +206,7 @@ After writing the data it also can be read again as shown by figure \ref{fig:cas
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
-This is the cluster architecture
+Which node has a certain piece of data is not determined by a master server. Any node can hash the partition key of an entry and arrive at a token. All nodes are placed somewhere on a \textit{token ring}, see figure \ref{fig:cassandra:tokenring}.
 
 \newcommand{\Ray}{3cm}
 \begin{figure}[ht]
@@ -253,7 +256,142 @@ This is the cluster architecture
   \label{fig:cassandra:tokenring}
 \end{figure}
 
-\section{Distributed writes and reads (CAP Theorem)}
+The tokens from the node's location to the next node belong to it. That means if the hashing of a partition key results in a token between 0 and 63 the data will be written to or read from node A. Keep in mind: This doesn't however mean that this node is \textit{in control} of that data - when replication is configured all replicas are equal. The node with that token is just the starting point to determine the first of the replicas.
+
+\paragraph{Replication} To ensure that all data continues to be available even if some nodes go down Cassandra replicates the data in the cluster. Replication can be defined for each keyspace when it is created. There is a simple strategy and a network topology aware strategy. \\
+The \texttt{SimpleStrategy} places the $n$ replicas of a piece of data on the next $n-1$\footnote{The first node that holds the data also counts as a replica.} nodes located clockwise on the ring after the node with the token. \\
+The \texttt{NetworkTopologyStrategy} strategy tries to be smart about the physical placement of replicas. It needs to be taught about in which datacenter and rack the nodes are located. To avoid losing data when an entire rack or datacenter fails this strategy prefers to spread it out.
+It is recommened to use this strategy in production, unless all nodes are in a single rack, where both strategies are equivalent.  % TODO cite datastax
+
+\paragraph{Rebalancing}
+
+\begin{figure}[ht]
+  \begin{tikzpicture}
+    % Circle
+    \fill[fill=black!25] (3, 0) arc (0:360:3);
+    \node[circle,scale=2,fill=blue] at (0:3) {};
+    \node[circle,scale=2,fill=blue] at (180:3) {};
+    \node[circle,scale=2,fill=blue] at (200:3) {};
+    \node[circle,scale=2,fill=blue] at (-20:3) {};
+
+    \begin{scope}[shift={(9,0)}]
+      \fill[fill=black!25] (3, 0) arc (0:360:3);
+      \node[circle,scale=2,fill=blue] at (0:3) {};
+      \node[circle,scale=2,fill=blue] at (180:3) {};
+      \node[circle,scale=2,fill=green] at (270:3) {};
+      \node[circle,scale=2,fill=green] at (90:3) {};
+    \end{scope}
+  \end{tikzpicture}
+  \caption{Rebalancing}
+  \label{fig:cassandra:rebalancing}
+\end{figure}
+
+TODO
+
+\paragraph{Virtual Nodes}
+
+TODO
+
+\subsection{Distributed writes and reads (CAP Theorem)}
+
+Cassandra has a masterless architecture; no single node controls any particular piece of data\footnote{Unless explicitly configured to do so}. This brings with it that a client can run query against any node of the cluster. In practice the client determines, either by some heuristic of proximity/latency or a round-robin algorithm, which node to use.
+For one query that particular node becomes the \textit{coordinator node}; it coordinates the execution and distribution of that query.
+First it hashes the partition key of the data to obtains the token and finds the node responsible for it. By using the replication strategy it can find out which replicas are responsible for that data as well. \\
+When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update theid data, this is called a \textit{read\_repair}. \\
+When executing a write query the coordinator  TODO
+
+Hinted Handoff: When the coordinator wants to write the data to one of the replicas which is currently unavailable
+
+In short, the process looks like this:
+
+\begin{enumerate}
+  \item Client sends query to any node
+  \item That node becomes coordinator
+  \item Coordinator determines tokens by hashing
+  \item Coordinator send write or read requests to all replicas determined by replication strategy
+  \item For writing
+    \begin{enumerate}
+      \item Return success to client when more than \texttt{CL.write} nodes have acknowledged
+      \item Write \textit{hinted handoff} to log for nodes that are currently unavailable
+    \end{enumerate}
+  \addtocounter{enumi}{-1}  % Both writing and reading should have the same number
+  \item For reading
+    \begin{enumerate}
+      \item Return newest response when more than \texttt{CL.read} nodes have responed
+      \item Send \texttt{read\_repair} to nodes with outdated data
+    \end{enumerate}
+\end{enumerate}
+
+This process is also illustrated by figure~\ref{fig:cassandra:replication}.
+The client queries node 4 which becomes the coordinator and then itself queries all replicas (1, 8 and 11).
+When node 1 answers the default consistency level of \texttt{ONE} is satisfied and an answer is returned to the client.
+
+\begin{figure}[ht]
+  \begin{tikzpicture}
+    % Circle
+    \filldraw[fill=cyan] (\Ray, 0) arc (0:360:\Ray);
+
+    % Nodes on the circle
+    \foreach \x [count=\p] in {0,...,11} {
+      \def\nodeColor{orange}
+      \ifnum \p=1
+        \def\nodeColor{green}
+      \fi
+      \ifnum \p=8
+        \def\nodeColor{green}
+      \fi
+      \ifnum \p=11
+        \def\nodeColor{green}
+      \fi
+      \ifnum \p=4
+        \def\nodeColor{yellow}
+      \fi
+      \node[circle,draw,scale=0.75,fill=\nodeColor] (\p) at (90-\x*30:\Ray) {\p};
+    };
+
+    % Arrows between the nodes
+    \draw [->,thick] (4) to[bend right=10] (1);
+    \draw [<-,thick,draw=red] (4) to[bend left=10] (1);
+    \draw [->,thick, dashed, blue] (4) -- (11);
+    \draw [->,thick, dashed, blue] (4) -- (8);
+
+    % Client plus its arrows
+    \node[fill=cyan,draw,minimum width=1.5cm,minimum height=1cm,rounded corners=.1cm] (Client) at (2*\Ray, 0) {Client};
+    \draw [->,thick,draw=red] (4) to[bend right=10] (Client);
+    \draw [<-,thick] (4) to[bend left=10] (Client);
+
+    % Legend
+    \node[circle,draw,scale=0.75,fill=yellow,label=right:{Coordinator Node}] (coordinatorLegend) at (2.5*\Ray, 0.5) {N};
+    \node[circle,draw,scale=0.75,fill=green,label=right:{Replica}] (replicaLegend) at (2.5*\Ray, -0.5) {N};
+  \end{tikzpicture}
+  \caption{Replication}
+  \label{fig:cassandra:replication}
+\end{figure}
+
+\paragraph{Tuning Consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
+Because different applications have different requirements of availability and consistency Cassandra offers several screws to turn to adjust it's alignment on that spectrum.
+
+One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion.
+
+Cassandra offers these, but not limited to these, options.
+
+\begin{itemize}
+  \item \texttt{ALL} replicas
+  \item \texttt{QUORUM}: A majority of the replicas: half + 1
+  \item \texttt{THREE} replicas
+  \item \texttt{TWO} replicas
+  \item \texttt{ONE} replicas (default)
+  \item \texttt{ANY}: Only writing - At least one replica or a logged hinted handoff if all are unavailable
+\end{itemize}
+
+In addition to these levels Cassandra also offers others that also take into account how nodes are distributed into different datacenters. \\
+For each query, but usually an entire client session, the consistency level can be chosen.
+
+The \texttt{ALL} level yields the highest consistency. Only when all replicas have responded the response it given to the client. That means either all were updated or all were asked for their current dataset. That means there is no uncertainty about what the result is - all replicas must agree. The \texttt{ANY} consistency level is the
+
+\paragraph{Replication Factor} Whenever creating a keyspace you have to configure its replication strategy. Whatever strategy you choose you have to determine how often you want a piece of data to be replicated. If you go with the lowest possible value of 1 the failure of any node will cause data loss (read and write failures). Increasing the replication factor means that more nodes can fail while requests can still be properly responded to - this means increased availability. It will, however, also mean that the additional replicas can get out of sync, which lowers the consistency.
+
+We see that Cassandra by default Cassandra is highly available and only eventually consistent but it can be gradually tuned to being highly consistent and more susceptible to failure.
 
 \section{Setup and Configuration}  % Setup
 Cassandra is designed to be run in a cluster of multiple machines. That has to be kept in mind even when setting up a single instance. That single instance would form a single node cluster. This makes manual configuration unavoidable - every node needs to know how to join the cluster.
@@ -283,9 +421,9 @@ start_native_transport: true
 For the masterless cluster to function all nodes need to be able to reach all other nodes. This is trivial if all are in the same subnet of the network. Then they can just reach each other by their IP addresses.
 When they are in different subnets however they each have a private (local to their subnet) and public (inter subnet) address. This is very often the case in public cloud offerings. There are just not enough addresses available to give every node a public one.
 Cassandra needs to know to things:
-1. On what address to listen for oncoming TPC connections. That's what \mintinline{yaml}{listen_address} is for. This is the local/private address.
-2. What address to tell other nodes it's reachable under. This is set by \mintinline{yaml}{broadcast_address} and it is the public address that all other nodes must be able to reach.
-Therefore in a local network (with no address translation between the nodes) \mintinline{yaml}{listen_address} and \mintinline{yaml}{broadcast_address} are set to the same value.
+1. On what address to listen for oncoming TPC connections. That's what \texttt{listen\_address} is for. This is the local/private address.
+2. What address to tell other nodes it's reachable under. This is set by \texttt{broadcast\_address} and it is the public address that all other nodes must be able to reach.
+Therefore in a local network (with no address translation between the nodes) \texttt{listen\_address} and \texttt{broadcast\_address} are set to the same value.
 
 In order to create a single cluster instance the node has to have its seed set to containing only its own address. Since it doesn't need to listen on a public or even private IP this should, in most cases, be \texttt{localhost}.
 The first node of a cluster can be thought of as such a single instance node until others join.
@@ -294,3 +432,11 @@ In order for additional nodes to join the cluster configure them analogous to th
 Upon starting them they will automatically communicate with the seed and join the cluster.
 
 \section{Summary and Conclusion}
+%- Summary, most important parts (results)
+%- Limitations => Future research
+%- All questions that came up ^
+%- Research Question: Answer
+%- Discussion
+%- Conclusion
+
+\cite{cassandra_paper}
