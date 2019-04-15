@@ -14,17 +14,17 @@ Cassandra is a Wide Column Store Database. It is table-like but not relational.
 The architecture and design make it a distributed and masterless data store for large data.
 It is written in Java and can be run distributed on commodity hardware.
 Since it is masterless there is no single point of failure.
-Nodes (connected instances running Cassandra) can be hot-swap like conntected to a Cassandra cluster.
-This is called elastic scalability. Adding a new node and removing one will elasticly increase or decrease
+Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster.
+This is called elastic scalability <- TODO: No it's not! yeah, this kinda is->. Adding a new node and removing one will elasticly increase or decrease
 the cluster size without any major imapct on the distributed system.
 All these features make Cassandra highly availabile and fault tolerance.
-Depening on the settings, a cluster of Cassandra nodes can be more or less consistent.
+Depending on the settings, a cluster of Cassandra nodes can be more or less consistent.
 From eventually consistent, the lowest setting for consistency, to highly consistent.
-This can be reffered to as tunable consistency and allows for a configuration depening classification in 
-the CAP Therorem. More on that in another chapter.
+This can be referred to as tunable consistency and allows for a configuration dependent classification in
+the CAP Therorem. More on that in section \ref{sec:CassandraClusterArchitecture}.
 
 Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved
-in the development process. Cassandra does share similarities to DynamoDB and Googles BigTable approach.
+in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB and in turn its inspiration Googles BigTable.
 Now it is a free software project of the Apache Foundation. Development is mainly driven by DataStax.
 A company designated for commercial Cassandra instances and enterprise support.
 
@@ -32,7 +32,7 @@ A company designated for commercial Cassandra instances and enterprise support.
 \section{Wide Column Store}
 
 A wide column store is a tabular but not relational aproach to store data.
-It is not column oriented, since the rows are stored together. 
+It is not column oriented, since the rows are stored together.
 A row can have missing columns which are not stored on disk. This makes it sparse.
 It can be thought like a key-value store where the value can have a subset of a predefined set of columns.
 Or put in other words; "Sparse, distributed multi-dimensional sorted map" \cite{chang2008bigtable}
@@ -52,8 +52,8 @@ There are several benefits for using cassandra such as:
         \item Globally distributed cluster \\ (e.g. multicloud)
         \item Query language similar SQL (CQL)
 \end{itemize}
-If any of these points apply to a project or use-case Cassandra might be a fit. 
-But to be sure it is even more important to rule out the cases where Cassandra is for sure not a fit.
+If any of these points apply to a project or use-case Cassandra is probably a good fit.
+But to be sure it is even more important to rule out the cases where Cassandra is for sure not a good fit.
 This is the case if:
 \begin{itemize}
         \item Single system instance
@@ -71,7 +71,7 @@ To sump it up there are general Use-Case conditions where Cassandra is a great f
 Envornments with these needs should find a solution with Cassandra/
 \begin{itemize}
     \item Large Deployments
-    In order to make use of Cassandras features and benefits 
+    In order to make use of Cassandras features and benefits
     \item Tons of writes
       \begin{itemize}
         \item{"high performance at high write volumes with many concurrent client threads" \cite{cassandra_oreilly}}
@@ -97,8 +97,8 @@ Envornments with these needs should find a solution with Cassandra/
 \section{Data Modelling in Cassandra}  % How to model data (or rather tables)
 
 
- 
-Data Modelling is different in Cassandra, compared to other Databases like traditional 
+
+Data Modelling is different in Cassandra, compared to other Databases like traditional
 
 \section{Using the Cassandra Query Language}  % How to use CQL
 This section will give a short overview of how to interact with a Cassandra database using the Cassandra Query Language (CQL), which is mainly inspired by the Structured Query Language (SQL) \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateKeystore}.
