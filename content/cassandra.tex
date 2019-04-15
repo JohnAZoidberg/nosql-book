@@ -21,13 +21,11 @@ in the development process. Hence Cassandra shares similarities with the archite
 Now it is a free software project of the Apache Foundation. Development is mainly driven by DataStax.
 A company designated for commercial Cassandra instances and enterprise support.
 
-
 \section{Wide Column Store}
 
 A wide column store is a tabular but not relational aproach to store data. It is not column oriented, since the rows are stored together. A row can have missing columns which are not stored on disk. This makes it sparse.
 It can be thought like a key-value store where the value can have a subset of a predefined set of columns. Or, put in other words; "Sparse, distributed multi-dimensional sorted map" \cite{chang2008bigtable}
 The naming can be explained as a key value store with wide (complex) values that consist of columns.
-
 
 \section{Use-Cases Cassandra}
 Cassandra comes with strong benefits over other database systemes. These benefits and extra features make it miss some features which one might expect as standard in databse systems.
@@ -44,15 +42,17 @@ If any of these points apply to a project or use-case Cassandra is probably a go
 But to be sure it is even more important to rule out the cases where Cassandra is for sure not a good fit.
 The following paragraph will describe limits of Cassandra. If the use-case needs any of those features, Cassandra will most likely be not a good fit.
 First of all single system instance with Cassandra should be avoided. Most of the features an benefits come with multiple node setups. Use-Cases which would need a dozen nodes seem to find a great fit with the distributed storage system.
-Euqually important  Ever changing queries (The table is fine-tuned for pre defined queries)
-        \item Lots of updates and deletes interspersed with reads (This slows Cassandra down)
-        \item Transactions (ACID)
-        \item Relations (joins, ...)
-        \item Column aggregation ({GROUP BY}) \\
-        (Being a wide cloumn oriented database, these functions are not available)
-        \item {AUTO INCREMENT}
-        \item Data validation (e.g. {NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
-\end{itemize}
+Euqually important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. Ever changing queries are not possible. Tables are fine-tuned for pre defined queries. More detail in the modeling chapter.
+
+
+
+Lots of updates and deletes interspersed with reads (This slows Cassandra down)
+ Transactions (ACID)
+ Relations (joins, ...)
+ Column aggregation GROUP BY
+Being a wide cloumn oriented database, these functions are not available)
+ {AUTO INCREMENT}
+ Data validation (e.g. {NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
 
 To sump it up there are general Use-Case conditions where Cassandra is a great fit.
 Envornments with these needs should find a solution with Cassandra/
@@ -60,25 +60,22 @@ Envornments with these needs should find a solution with Cassandra/
     \item Large Deployments
     In order to make use of Cassandras features and benefits
     \item Tons of writes
-      \begin{itemize}
-        \item{"high performance at high write volumes with many concurrent client threads" \cite{cassandra_oreilly}}
-      \end{itemize}
+        \item{"high performance at high write volumes with many concurrent client threads"}
+
     \item Geographical distribution of data and database clients
     \item Different columns per row
 \end{itemize}
-{Ingenuity, architecture and featureset limited when used as single-node}
- {Several nodes? $\rightarrow$ might be a fit}
- {Dozen of nodes? $\rightarrow$ great fit}
+Ingenuity, architecture and featureset limited when used as single-node
+ Several nodes? $\rightarrow$ might be a fit
+ Dozen of nodes? $\rightarrow$ great fit
 
-{Consider read/write ratio}
-    <2>[item]{As mentioned, cassandra optimized for write throughput}
-    <2>[item]{Not many updates / data changes, slows read down}
-    <2>[item]{Quote; you can even write to multiple nodes with multiple threads}
-
-    <3>[item]{Globally deployed application, bring data to user}
-    <3>[item]{Configure to replicate across multiple data centers}
-
-    <4>[item]{Again: rows are sparse}
+Consider read/write ratio
+As mentioned, cassandra optimized for write throughput
+Not many updates / data changes, slows read down
+Quote; you can even write to multiple nodes with multiple threads
+Globally deployed application, bring data to user
+Configure to replicate across multiple data centers
+Again: rows are sparse
 
 
 \section{Data Modelling in Cassandra}  % How to model data (or rather tables)
