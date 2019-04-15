@@ -36,17 +36,15 @@ One benefit of Cassandr is fast writes which means it can handle a high throughp
 The way Cassandra handles those operations make them equal to a "regular" write operation. But more detail on that later on. Another key benefit is high availability. Due to its architecture and depending on the settings 
 a Cassandra setup can be highly available. Since one of the base assumptions of the distributed system is the expensiveness of inter-node communication, it has an linear horizontal scalability. 
 The communication between nodes does not increase with the size of node. Due to its distributed nature, the architecture does not rely on a master-slave setting and comes masterless. 
+Fruthermore it can be configured to work with several clusters, globally distributed, wich makes for example multicloud Cassandra setups possible.
 This means that any client can read from and write to any node. As described previously Cassandra is a wide column store database which results in having a flexible schema where rows can have missing columns that are not stored on disk.
-It is possible to configure different clusters and 
-        \item Globally distributed cluster \\ (e.g. multicloud)
-        \item Query language similar SQL (CQL)
-\end{itemize}
+Cassandra has an own query language which is similar SQL and called CQL (Cassandra Querry Language). This makes it easier to use Cassandra if knowledge from SQL is available.
+
 If any of these points apply to a project or use-case Cassandra is probably a good fit.
 But to be sure it is even more important to rule out the cases where Cassandra is for sure not a good fit.
-This is the case if:
-\begin{itemize}
-        \item Single system instance
-        \item Ever changing queries (The table is fine-tuned for pre defined queries)
+The following paragraph will describe limits of Cassandra. If the use-case needs any of those features, Cassandra will most likely be not a good fit.
+First of all single system instance with Cassandra should be avoided. Most of the features an benefits come with multiple node setups. Use-Cases which would need a dozen nodes seem to find a great fit with the distributed storage system.
+Euqually important  Ever changing queries (The table is fine-tuned for pre defined queries)
         \item Lots of updates and deletes interspersed with reads (This slows Cassandra down)
         \item Transactions (ACID)
         \item Relations (joins, ...)
