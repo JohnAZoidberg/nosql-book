@@ -290,17 +290,19 @@ Nodes A and B can stay at their location, C and D are repositioned. C is moved f
 
 \paragraph{Virtual Nodes}
 
-By default each node is placed on the ring just once, when using virtual nodes they each can be placed on the node multiple times. This brings three advantages:
+By default each node is placed on the ring just once, when using virtual nodes they each can be placed on the node multiple times. This brings four advantages:
 
 \begin{itemize}
   \item Nodes can occupy a specified proportion of the ring
   \item Tokens are automatically calculated and assigned to nodes $rightarrow$ No manual rebalancing
   \item Data hotspots on the ring are handled my multiple nodes
+  \item Rebuilding of replacements is faster
 \end{itemize}
 
 1. When nodes have different processing capabilities and disk space that performance difference should be taken into account so that all nodes receive load which is proportional to their performance. With virtual nodes enabled a node can be assigned any number of tokens. Not the absolute number of tokens of an individual node is relevant it only has an effect on how much of the ring it occupies on relation to the others.  \\
 2. Without using virtual nodes the tokens for each node have to be calculated manually and assigned to each node. Cassandra also automatically rebalances the ring whenever a new node joins or a node leaves. \\
-3. When data partitioning was done poorly or the data happens to cluster around a particular token range the node responsible for that data receives disproportionately much load. Virtual nodes remedy that because they not only make the individual partitions smaller but they also make any single note responsible for multiple areas on the ring.
+3. When data partitioning was done poorly or the data happens to cluster around a particular token range the node responsible for that data receives disproportionately much load. Virtual nodes remedy that because they not only make the individual partitions smaller but they also make any single note responsible for multiple areas on the ring. \\
+4. When a node goes down and a replacement is brought up. This replacement needs the data of the node it replaced. If the replication factor is three it needs data from three different partitions. Without virtual nodes this can come from up to $3\cdot(3-1)=6$ different replicas. When using virtul nodes the partitions the same amount of data is spread across more nodes and thus the replication can transfer data from more nodes at once. If each node is split into $k$ virtual nodes it can replicate from $k$ times more replicas.
 
 See figure \ref{fig:cassandra:vnodes} for a visualization.
 
