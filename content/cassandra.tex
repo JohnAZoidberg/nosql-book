@@ -32,15 +32,15 @@ A wide column store is a tabular but not relational aproach to store data.
 It is not column oriented, since the rows are stored together. 
 A row can have missing columns which are not stored on disk. This makes it sparse.
 It can be thought like a key-value store where the value can have a subset of a predefined set of columns.
-Or put in other words; "Sparse, distributed multi-dimensional sorted map" \tinycite{chang2008bigtable}
+Or put in other words; "Sparse, distributed multi-dimensional sorted map" \cite{chang2008bigtable}
 The naming can explained as a key value store with wide (complex) values that consist of columns.
 
 
 \section{Use-Cases Cassandra}
 There are several benefits for using cassandra such as:
-\Being{itemize}
+\begin{itemize}
         \item Fast writes \\ (high throughput, not latency) \\
-        (Those writes include \lstinline{INSERT} \lstinline{UPDATE} \lstinline{DELETE})
+        (Those writes include {INSERT} {UPDATE} {DELETE})
         \item High availability
         \item Easy (linear) horizontal scalability
         (The inter-node communication does not increase with more nodes)
@@ -58,10 +58,10 @@ This is the case if:
         \item Lots of updates and deletes interspersed with reads (This slows Cassandra down)
         \item Transactions (ACID)
         \item Relations (joins, ...)
-        \item Column aggregation (\lstinline{GROUP BY}) \\
+        \item Column aggregation ({GROUP BY}) \\
         (Being a wide cloumn oriented database, these functions are not available)
-        \item \lstinline{AUTO INCREMENT}
-        \item Data validation (e.g. \lstinline{NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
+        \item {AUTO INCREMENT}
+        \item Data validation (e.g. {NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
 \end{itemize}
 
 To sump it up there are general Use-Case conditions where Cassandra is a great fit.
@@ -71,7 +71,7 @@ Envornments with these needs should find a solution with Cassandra/
     In order to make use of Cassandras features and benefits 
     \item Tons of writes
       \begin{itemize}
-        \item{"high performance at high write volumes with many concurrent client threads" \tinycite{cassandra_oreilly}}
+        \item{"high performance at high write volumes with many concurrent client threads" \cite{cassandra_oreilly}}
       \end{itemize}
     \item Geographical distribution of data and database clients
     \item Different columns per row
