@@ -1,6 +1,6 @@
 .PHONY: clean
 
-main.pdf: main.tex content/*
+main.pdf: main.tex content/* *.bib
 	latexmk -pdflatex="pplatex -c pdflatex --" --shell-escape -pdf -interaction=nonstopmode main.tex 2>&1 | tee latexmk_log.txt
 
 clean:
