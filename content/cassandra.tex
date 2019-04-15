@@ -177,7 +177,7 @@ In figure \ref{fig:cassandra:writeData} it can be seen that the write processe t
 \begin{enumerate}
 \item \textbf{Write to journal} Hereby the query is simple append to the journal on the disk, making it persistent even if the node goes down. As this action is a simple append it is very fast and leaves the data in a temporal order in the journal.
 \item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form the data will be written on disk,
-\item \textbf{Flush to disk when memtable is too big} This allows to simple flush the data and some metadata to the disk when it gets to big for the memory to hold it. Hereby a new data file is created not touching any of the previously written files, making this action also quite fast as no lookups have to be performed.
+\item \textbf{Flush to disk when memtable is too big} This allows to simple flush the data and some metadata to the disk when it gets to big for the memory to hold it. Hereby a new data file is created, not touching any of the previously written files, making this action also quite fast as no lookups have to be performed. It is performed in a parallel fashion and does not impact incoming requests.
 \end{enumerate}
 
 After writing the data it also can be read again as shown by figure \ref{fig:cassandra:readData}:
@@ -195,10 +195,11 @@ After writing the data it also can be read again as shown by figure \ref{fig:cas
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
-Which node has a certain piece of data is not determined by a master server. Any node can hash the partition key of an entry and arrive at a token. All nodes are placed somewhere on a \textit{token ring}, see figure \ref{fig:cassandra:tokenring}.
+Which node has a certain piece of data is not determined by a master server. Any node has the ability to determine where a particular piece of data is or must be stored just by hashing the partition key of a row. The result of that calculation is called a token. All nodes are placed somewhere on a \textit{token ring} (see figure \ref{fig:cassandra:tokenring}) and store the data of the tokens they're assigned to.
 
 \newcommand{\Ray}{3cm}
 \begin{figure}[ht]
+  \centering
   \begin{tikzpicture}
     % Nodes on the circles
     \node[circle,minimum width=2cm,minimum height=1cm,draw,name path=n1] (Node A) at (90:\Ray) {A};
@@ -254,32 +255,81 @@ It is recommened to use this strategy in production, unless all nodes are in a s
 
 \paragraph{Rebalancing}
 
+When a new node is added or a node is removed it is likely that the distribution of nodes on the ring becomes imbalanced. When the ring is imbalanced nodes are responsible for different amounts of data and experience different amounts of load. Since nodes are recommended to be of the same performance level\footnote{Or be balanced by dividing them up into virtual nodes according to performance} this is not optimal. Some nodes are overloaded and others underuntilized.
+To balance the ring the nodes are moved to equidistant positions on the ring. When this happens data is bound to be assigned to a new owner node - that data will be moved.
+TODO talk about consistent hashing
+% TODO: Cite a consistent hashing paper
+
+Figure \ref{fig:cassandra:rebalancing} visualizes an imbalanced ring and how the green nodes can be repositioned.
+
+
 \begin{figure}[ht]
+  \centering
   \begin{tikzpicture}
     % Circle
-    \fill[fill=black!25] (3, 0) arc (0:360:3);
-    \node[circle,scale=2,fill=blue] at (0:3) {};
-    \node[circle,scale=2,fill=blue] at (180:3) {};
-    \node[circle,scale=2,fill=blue] at (200:3) {};
-    \node[circle,scale=2,fill=blue] at (-20:3) {};
+    \fill[fill=black!25] (2.5, 0) arc (0:360:2.5);
+    \node[circle,fill=blue] at (180:2.5) {A};
+    \node[circle,fill=blue] at (0:2.5) {B};
+    \node[circle,fill=blue] at (-20:2.5) {C};
+    \node[circle,fill=blue] at (200:2.5) {D};
 
-    \begin{scope}[shift={(9,0)}]
-      \fill[fill=black!25] (3, 0) arc (0:360:3);
-      \node[circle,scale=2,fill=blue] at (0:3) {};
-      \node[circle,scale=2,fill=blue] at (180:3) {};
-      \node[circle,scale=2,fill=green] at (270:3) {};
-      \node[circle,scale=2,fill=green] at (90:3) {};
+    % Legend
+    \begin{scope}[shift={(7,0)}]
+      \fill[fill=black!25] (2.5, 0) arc (0:360:2.5);
+      \node[circle,fill=blue] at (180:2.5) {A};
+      \node[circle,fill=blue] at (0:2.5) {B};
+      \node[circle,fill=green] at (270:2.5) {C};
+      \node[circle,fill=green] at (90:2.5) {D};
     \end{scope}
   \end{tikzpicture}
   \caption{Rebalancing}
   \label{fig:cassandra:rebalancing}
 \end{figure}
 
-TODO
+Nodes A and B can stay at their location, C and D are repositioned. C is moved further along the ring in a clockwise direction. It gives much of the data it was previously responsible to B and takes all of D's data. D is moved past A and takes approximately half of its data.
 
 \paragraph{Virtual Nodes}
 
-TODO
+By default each node is placed on the ring just once, when using virtual nodes they each can be placed on the node multiple times. This brings three advantages:
+
+\begin{itemize}
+  \item Nodes can occupy a specified proportion of the ring
+  \item Tokens are automatically calculated and assigned to nodes $rightarrow$ No manual rebalancing
+  \item Data hotspots on the ring are handled my multiple nodes
+\end{itemize}
+
+1. When nodes have different processing capabilities and disk space that performance difference should be taken into account so that all nodes receive load which is proportional to their performance. With virtual nodes enabled a node can be assigned any number of tokens. Not the absolute number of tokens of an individual node is relevant it only has an effect on how much of the ring it occupies on relation to the others.  \\
+2. Without using virtual nodes the tokens for each node have to be calculated manually and assigned to each node. Cassandra also automatically rebalances the ring whenever a new node joins or a node leaves. \\
+3. When data partitioning was done poorly or the data happens to cluster around a particular token range the node responsible for that data receives disproportionately much load. Virtual nodes remedy that because they not only make the individual partitions smaller but they also make any single note responsible for multiple areas on the ring.
+
+See figure \ref{fig:cassandra:vnodes} for a visualization.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}
+    % Circle
+    \draw[line width=1.5mm] (\Ray, 0) arc (0:360:\Ray);
+
+    % Nodes on the circle
+    \foreach \x [count=\p] in {0,...,2} {
+      \node[circle,draw,minimum size=1cm,fill=orange] at (90-\x*120-0*30:\Ray)
+        {\pgfmathparse{1+4*\x}\pgfmathprintnumber{\pgfmathresult}};
+      \node[circle,draw,minimum size=1cm,fill=cyan] at (90-\x*120-1*30:\Ray)
+        {\pgfmathparse{2+4*\x}\pgfmathprintnumber{\pgfmathresult}};
+      \node[circle,draw,minimum size=1cm,fill=yellow] at (90-\x*120-2*30:\Ray)
+        {\pgfmathparse{3+4*\x}\pgfmathprintnumber{\pgfmathresult}};
+      \node[circle,draw,minimum size=1cm,fill=black!25] at (90-\x*120-3*30:\Ray)
+        {\pgfmathparse{4+4*\x}\pgfmathprintnumber{\pgfmathresult}};
+    };
+
+    \node[circle,draw,minimum size=1cm,fill=orange,label=right:{Node A}] at (2*\Ray, 1.875) {};
+    \node[circle,draw,minimum size=1cm,fill=cyan,label=right:{Node B}] at (2*\Ray, 0.625) {};
+    \node[circle,draw,minimum size=1cm,fill=yellow,label=right:{Node C}] at (2*\Ray, -0.625) {};
+    \node[circle,draw,minimum size=1cm,fill=black!25,label=right:{Node D}] at (2*\Ray, -1.875) {};
+  \end{tikzpicture}
+  \caption{Virtual Nodes}
+  \label{fig:cassandra:vnodes}
+\end{figure}
 
 \subsection{Distributed writes and reads (CAP Theorem)}
 
@@ -316,6 +366,7 @@ The client queries node 4 which becomes the coordinator and then itself queries 
 When node 1 answers the default consistency level of \texttt{ONE} is satisfied and an answer is returned to the client.
 
 \begin{figure}[ht]
+  \centering
   \begin{tikzpicture}
     % Circle
     \filldraw[fill=cyan] (\Ray, 0) arc (0:360:\Ray);
