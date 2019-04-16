@@ -362,7 +362,9 @@ Cassandra has a masterless architecture; no single node controls any particular 
 For one query that particular node becomes the \textit{coordinator node}; it coordinates the execution and distribution of that query.
 First it hashes the partition key of the data to obtains the token and finds the node responsible for it. By using the replication strategy it can find out which replicas are responsible for that data as well. \\
 When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update theid data, this is called a \textit{read\_repair}. \\
-When executing a write query the coordinator sends the write request to all responsible replicas. If a replica is not currently available the coordinator logs the request and retries it later when the replica is back up  - this is called a \textit{hinted handoff}. After more than \textit{Cl.write} replicas have responded that they successfully completed the write the client is given a successful response.
+When executing a write query the coordinator sends the write request to all responsible replicas. If a replica is not currently available the coordinator logs the request and retries it later when the replica is back up  - this is called a \textit{hinted handoff}. After more than \texttt{Cl.write} replicas have responded that they successfully completed the write the client is given a successful response.
+
+For an explanation of the consistency levels \texttt{CL.read} and \texttt{CL.write} see section \ref{par:cassandra:consistency}.
 
 In short, the process looks like this:
 
@@ -431,10 +433,10 @@ When node 1 answers the default consistency level of \texttt{ONE} is satisfied a
   \label{fig:cassandra:replication}
 \end{figure}
 
-\paragraph{Tuning Consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
+\paragraph{Tuning Consistency} \label{par:cassandra:consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
 Because different applications have different requirements of availability and consistency Cassandra offers several screws to turn to adjust it's alignment on that spectrum.
 
-One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion.
+One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion. Consistency level for reading and writing are abbreviated as \texttt{CL.read} and x respectively.
 
 Cassandra offers these, but not limited to these, options.
 
@@ -458,7 +460,8 @@ We see that Cassandra by default Cassandra is highly available and only eventual
 
 \section{Setup and Configuration}  % Setup
 Cassandra is designed to be run in a cluster of multiple machines. That has to be kept in mind even when setting up a single instance. That single instance would form a single node cluster. This makes manual configuration unavoidable - every node needs to know how to join the cluster.
-For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about TODO. After joining the cluster is complete the distinction of \textit{seed nodes} is no longer relevant - all nodes are completely equal.
+For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about the state of the ring and the new node is assigned a place on the ring. After joining the cluster is complete and the distinction of \textit{seed nodes} is no longer relevant - all nodes are equally important.
+When a new node was added it is responsible for a chunk of the data the others were previously responsible for. They do not remove that, now unnecessary, data on their own - to do so run \texttt{nodetool cleanup} on each of the old nodes.
 
 A simple but sufficient\footnote{The other settings can be left at their defaults.} configuration of the first node would look like shown in listing~\ref{lst:cassandra:first_node_config}.
 
