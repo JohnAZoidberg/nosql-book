@@ -37,7 +37,7 @@ Cassandra can be made aware of the relative physical location of all nodes, for 
 \subsection{Overview of Cassandra}
 Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elastically increase or decrease the cluster size without any major impact on the distributed system. This can be refereed to as elastic scalability. All these features make Cassandra highly available and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Theorem. More on that in section~\ref{sec:CassandraClusterArchitecture}.
 
-Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB \autocite{cassandra_paper}.
+Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB \autocite{lakshman2010cassandra}.
 Currently (Apr/19) it is a free software project of the Apache Foundation. Development is mainly driven by DataStax. A company designated for commercial Cassandra use and enterprise support.
 
 \section{Wide Column Store}
@@ -193,7 +193,7 @@ Hereby the only difference is how the primary key can be specified:
 The first part of the definition will always be the partition key. If it is a compound of several columns they need to be surrounded by parentheses and separated by comma in order to state that they as a whole form the partition key. If necessary the partition key can be followed by several clustering keys. Keep in mind that the data will be ordered first by the first clustering key, after that by the second and so on. This means that an \texttt{ORDER BY} has to first be called on the first clustering key and a second ordering can be done on the subsequent one. It will not be possible to only order by the second or other subsequent clustering keys when not ordering by the first. Any other non-primary key column cannot be used for ordering \autocite{cqlPrimaryKeyDefinition, cassandra3cqldocCreateTable}.
 
 \subsection{Interacting with data}
-In order to manipulate Cassandra only provides three possible methods \autocite{cassandra_paper}:
+In order to manipulate Cassandra only provides three possible methods \autocite{lakshman2010cassandra}:
 \begin{itemize}
     \item insert(table, key, rowMutation)
     \item get(table, key, columnName)
@@ -255,7 +255,7 @@ After writing the data it also can be read again as shown by figure~\ref{fig:cas
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
-Which node has a certain piece of data is not determined by a master server. Any node has the ability to determine where a particular piece of data is or must be stored just by hashing the partition key of a row. The result of that calculation is called a token. All nodes are placed somewhere on a \textit{token ring} (see figure~\ref{fig:cassandra:tokenring}) and store the data of the tokens they are assigned to.\autocite[2]{cassandra_paper} \autocite[209,210]{decandia2007dynamo}
+Which node has a certain piece of data is not determined by a master server. Any node has the ability to determine where a particular piece of data is or must be stored just by hashing the partition key of a row. The result of that calculation is called a token. All nodes are placed somewhere on a \textit{token ring} (see figure~\ref{fig:cassandra:tokenring}) and store the data of the tokens they are assigned to.\autocite[2]{lakshman2010cassandra} \autocite[209,210]{DeCandia2007Dynamo}
 
 \newcommand{\Ray}{3cm}
 \begin{figure}[ht]
@@ -309,7 +309,7 @@ Which node has a certain piece of data is not determined by a master server. Any
 The tokens from the node's location to the next node belong to it. That means if the hashing of a partition key results in a token between 0 and 63 the data will be written to or read from node A. Keep in mind: This doesn't however mean that this node is \textit{in control} of that data - when replication is configured all replicas are equal. The node with that token is just the starting point to determine the first of the replicas.
 
 \paragraph{Replication} To ensure that all data continues to be available even if some nodes go down Cassandra replicates the data in the cluster. Replication can be defined for each keyspace when it is created. There is a simple strategy and a network topology aware strategy. \autocite{datastax_replication} \\
-The \texttt{SimpleStrategy} places the $n$ replicas of a piece of data on the next $n-1$ nodes\footnote{The first node that holds the data also counts as a replica.} located clockwise on the ring after the node with the token. \autocite[3]{cassandra_paper} \\
+The \texttt{SimpleStrategy} places the $n$ replicas of a piece of data on the next $n-1$ nodes\footnote{The first node that holds the data also counts as a replica.} located clockwise on the ring after the node with the token. \autocite[3]{lakshman2010cassandra} \\
 The \texttt{NetworkTopologyStrategy} strategy tries to be smart about the physical placement of replicas. It needs to be taught about in which datacenter and rack the nodes are located. To avoid losing data when an entire rack or datacenter fails this strategy prefers to spread it out.
 It is recommended to use this strategy in production, unless all nodes are in a single rack, where both strategies are equivalent.
 
@@ -394,7 +394,7 @@ See figure~\ref{fig:cassandra:vnodes} for a visualization.
 
 \subsection{Distributed writes and reads (CAP Theorem)} \label{subsec:cassandra:cap}
 
-Cassandra has a masterless architecture; no single node controls any particular piece of data \autocite[5]{cassandra_paper}\footnote{Unless explicitly configured to do so}. A consequence is that a client can run queries against any node of the cluster. In practice the client determines, either by some heuristic of proximity/latency or a round-robin algorithm, which node to use.
+Cassandra has a masterless architecture; no single node controls any particular piece of data \autocite[5]{lakshman2010cassandra}\footnote{Unless explicitly configured to do so}. A consequence is that a client can run queries against any node of the cluster. In practice the client determines, either by some heuristic of proximity/latency or a round-robin algorithm, which node to use.
 For one query that particular node becomes the \textit{coordinator node}; it coordinates the execution and distribution of that query.
 First it hashes the partition key of the data to obtain the token and finds the node responsible for it. By using the replication strategy it can find out which replicas are responsible for that data as well. \\
 When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update their data, this is called a \textit{read repair}. \autocite{cassandra_distributed_read} \\
@@ -490,7 +490,7 @@ For each query, but usually an entire client session, the consistency level can 
 
 The \texttt{ALL} level yields the highest consistency. Only when all replicas have responded the response is given to the client. That means either all were updated or all were asked for their current dataset. Thus there is no uncertainty about what the result is - all replicas must agree. The \texttt{ANY} consistency level is the least consistent. The data does not have to be fully written to any SSTable, memtable or even commit log of a replica - a simple \textit{hinted handoff} on the coordinator is enough. \autocite[6,7]{cassandraInCAPtheorem}
 
-\paragraph{Replication Factor} Whenever creating a keyspace you have to configure its replication strategy. Whatever strategy you choose you have to determine how often you want a piece of data to be replicated. If you go with the lowest possible value of 1 the failure of any node will inevitably lead to data loss (read and write failures). Increasing the replication factor means that more nodes can fail while requests can still be properly responded to - this means increased availability. It will, however, also mean that the additional replicas can get out of sync, which lowers the consistency. \autocite[3]{cassandra_paper}
+\paragraph{Replication Factor} Whenever creating a keyspace you have to configure its replication strategy. Whatever strategy you choose you have to determine how often you want a piece of data to be replicated. If you go with the lowest possible value of 1 the failure of any node will inevitably lead to data loss (read and write failures). Increasing the replication factor means that more nodes can fail while requests can still be properly responded to - this means increased availability. It will, however, also mean that the additional replicas can get out of sync, which lowers the consistency. \autocite[3]{lakshman2010cassandra}
 
 We see that by default Cassandra is highly available and only eventually consistent but it can be gradually tuned to being highly consistent but more prone to failure. \autocite[2,3]{cassandraInCAPtheorem}
 
