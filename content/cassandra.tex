@@ -13,7 +13,7 @@ After that, a detailed guide on how to model data for Cassandra in order to make
 Transitioning into technical details and examples on how Cassandra works, what features and pitfalls it brings with it.
 
 
-Many large companies and organizations have deployed many Cassandra clusters. 
+Many large companies and organizations have deployed many Cassandra clusters.
 Here is an overview: \\
 
  \begin{tabular}{@{}ll}
@@ -74,6 +74,7 @@ Having a lot of updates and deletes interspersed with reads slow the system down
 
 To sump it up there are general Use-Case conditions where Cassandra is a great fit.
 In order to make an educated decision the following key-points should fit with the Use-Case and environment:
+
 \begin{itemize}
     \item Large Deployments
     \item Tons of writes
@@ -130,7 +131,7 @@ Figure~\ref{fig:cassandra:model_data2} show this circumstance; queries the syste
 Transitioning to the collection of queries in figure~\ref{fig:cassandra:model_data2} to accessible tables, can be seen in figure~\ref{fig:cassandra:model_data3}. It can be seen that data is stored redundantly, available on multiple tables. This does not bother the modeling since queries later on will not use any sort of join operation and be limited onto one table request - which is precisely why data is stored in multiple tables. Each table fulfills one of the queries previously thought of. Furthermore since there is no reference integrity it is possible to store ids in tables but the database system does not provide any functionality to make use of and / or connect those ids.
 
 In order to properly graph and document this type of modeling, a uniform and new way was proposed to write down data modeling for Cassandra and other similar systems with same needs. \autocite{chebotko2015data}
-These diagrams are called Chebotko diagrams and include the way queries are planned. This can be seen in figure~\ref{fig:cassandra:model_data2}. 
+These diagrams are called Chebotko diagrams and include the way queries are planned. This can be seen in figure~\ref{fig:cassandra:model_data2}.
 Out of this table, the diagram can be concluded. Creating to each query an unique table with all necessary information. The arrows with the queries numbers (Q1, Q2 ..) will be kept to keep the context and relation to the previous diagram (\ref{fig:cassandra:model_data3}).
 This can be seen in a descriptive example section around figure~\ref{fig:cassandra:chebotko}
 
@@ -549,8 +550,8 @@ When that's done and all nodes have fully joined the cluster you can interact wi
     %- Research Question: Answer
     %- Discussion
     %- Conclusion
-    
-This chapter gave an overview about what Cassandra is, when to use it and detailed insights on how to use it and its architecture. It has shown that Cassandra is a complex database system with unique benefits compared to other database systems. It solves a lot of problems that come with big data environments. Due to its uniqueness it has to be assessed very carefully whether Cassandra is a fit for a certain environment or not. Although it comes with major benefits and extra features, some expected features and base assumptions about a database system are different in Cassandra. 
+
+This chapter gave an overview about what Cassandra is, when to use it and detailed insights on how to use it and its architecture. It has shown that Cassandra is a complex database system with unique benefits compared to other database systems. It solves a lot of problems that come with big data environments. Due to its uniqueness it has to be assessed very carefully whether Cassandra is a fit for a certain environment or not. Although it comes with major benefits and extra features, some expected features and base assumptions about a database system are different in Cassandra.
 It could be seen, that it is a great fit for lots of fast writes environments but comes short in OLTP environments where traditional RDMBS databases shine.
 During the work on this chapter and the learning phase about Cassandra, it showed how detail rich and complex the solutions this distributed database storage brings with is. To truly understand Cassandra in all its different settings, possibilities and to be able to setup, run and maintain a production ready big sized cluster, more reading is needed. Especially the fine details how a Cluster will react in certain distress situations should be fully understood and can be assessed further.
 
