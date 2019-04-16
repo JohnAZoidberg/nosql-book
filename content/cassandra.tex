@@ -35,7 +35,7 @@ This shows that Cassandra is heavily used in big production environments of famo
 \subsection{Overview of Cassandra}
 Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elastically increase or decrease the cluster size without any major impact on the distributed system. This can be refereed to as elastic scalability. All these features make Cassandra highly available and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Theorem. More on that in section~\ref{sec:CassandraClusterArchitecture}.
 
-Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB.
+Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB. \autocite{cassandra_paper}
 Currently (Apr/19) it is a free software project of the Apache Foundation. Development is mainly driven by DataStax. A company designated for commercial Cassandra use and enterprise support.
 
 \section{Wide Column Store}
@@ -51,6 +51,7 @@ The naming can be explained as a key value store with wide (complex) values that
     \label{fig:cassandra:wide_column}
 \end{figure}
 
+\ref{fig:cassandra:wide_column} shows in a graphical representation the structure of a wide column store. The name is the primary key and different people have different columns. The columns with no data are not stored as null but rather not even stored as a whole. 
 
 \section{Use-Cases Cassandra}
 Cassandra comes with strong benefits over other database systems. These benefits and extra features make it miss some features which one might expect as standard in database systems.
@@ -69,7 +70,7 @@ First, a single system instance with Cassandra should be avoided. Most of the fe
 
 Equally important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. ACID transactions are not possible and tables are fine-tuned for pre defined queries. Those queries should be known early on and not change during use. It is not easily possible to change or extent those queries. Furthermore there are no relations between tables. It is possible to link, connect and reuse IDs but this has to be handled on client side, there are no operations on those IDs available. Additionally column aggregation operations such as GROUP BY are also not possible, since a wide column oriented storage does not allow such operations.
 
-Having a lot of updates and deletes interspersed with reads slow the system down due to the way of handling requests - mostly just appending data and not changing records. This has affects on data validation as well. It is not possible to check on write for data uniqueness, constraints or auto increments. 
+Having a lot of updates and deletes interspersed with reads slow the system down due to the way of handling requests - mostly just appending data and not changing records. This has affects on data validation as well. It is not possible to check on write for data uniqueness, constraints or auto increments. \autocite{cassandra_oreilly}
 
 To sump it up there are general Use-Case conditions where Cassandra is a great fit.
 In order to make an educated decision the following key-points should fit with the Use-Case and environment:
