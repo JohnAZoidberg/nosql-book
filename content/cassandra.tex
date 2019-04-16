@@ -6,15 +6,11 @@
 %- Task, goal, why, what
 %- Structure
 Scope: TODO \\
-Cassandra can be made aware of the relative physical location of all nodes, for example in which rack or datacenter they are. For real world usage it is recommended to do that and also adjust the configuration to take that into account. For trying out Cassandra on a single node or a small local cluster however all of those settings can be left at their defaults. To keep this chapter at a manageable size we will not explain the topological features, only mention that they are available.
+Cassandra can be made aware of the relative physical location of all nodes, for example in which rack or datacenter they are. For real world usage it is recommended to do that and also adjust the configuration to take that into account. For trying out Cassandra on a single node or a small local cluster however all of those settings can be left at their defaults. To keep this chapter at a manageable size we will not explain the opological features, only mention that they are available.
 
 \subsection{Abstract}
 \subsection{Overview of Cassandra}
-Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware.
-Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster.
-This is called elastic scalability <- TODO: No it's not! yeah, this kinda is->. Adding a new node and removing one will elasticly increase or decrease the cluster size without any major imapct on the distributed system.
-All these features make Cassandra highly availabile and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent.
-This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Therorem. More on that in section \ref{sec:CassandraClusterArchitecture}.
+Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elasticly increase or decrease the cluster size without any major imapct on the distributed system. This can be reffered to as elastic scalability. All these features make Cassandra highly availabile and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Therorem. More on that in section \ref{sec:CassandraClusterArchitecture}.
 
 Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved
 in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB and in turn its inspiration Googles BigTable.
@@ -38,51 +34,72 @@ Fruthermore it can be configured to work with several clusters, globally distrib
 This means that any client can read from and write to any node. As described previously Cassandra is a wide column store database which results in having a flexible schema where rows can have missing columns that are not stored on disk.
 Cassandra has an own query language which is similar SQL and called CQL (Cassandra Querry Language). This makes it easier to use Cassandra if knowledge from SQL is available.
 
-If any of these points apply to a project or use-case Cassandra is probably a good fit.
-But to be sure it is even more important to rule out the cases where Cassandra is for sure not a good fit.
-The following paragraph will describe limits of Cassandra. If the use-case needs any of those features, Cassandra will most likely be not a good fit.
-First of all single system instance with Cassandra should be avoided. Most of the features an benefits come with multiple node setups. Use-Cases which would need a dozen nodes seem to find a great fit with the distributed storage system.
-Euqually important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. Ever changing queries are not possible. Tables are fine-tuned for pre defined queries. More detail in the modeling chapter.
+If any of these points apply to a project or Use-Case, Cassandra is probably a good fit.
+But to be sure it is even more important to rule out the cases where Cassandra is not a good fit.
+The following paragraph will describe limits of Cassandra. If the use-case needs any of those features, Cassandra will most likely not suffice to fullfill requirements.
+First, a single system instance with Cassandra should be avoided. Most of the features and benefits come with multiple node setups. Use-Cases which would need a dozen nodes seem to find a great fit with the distributed storage system.
 
+Euqually important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. ACID transactions are not possible and tables are fine-tuned for pre defined queries. Those querries should be known early on and not change during use. It is not easily possible to change or extent those querries. Furthermore there are no relations beween tables. It is possible to link, connect and reuse IDs but this has to be handled on client side, there are no operations on those IDs available. Additionaly column aggregation operations such as GROUP BY are also not possible, since a wide column oriented storage does not allow such operations.
 
-
-Lots of updates and deletes interspersed with reads (This slows Cassandra down)
- Transactions (ACID)
- Relations (joins, ...)
- Column aggregation GROUP BY
-Being a wide cloumn oriented database, these functions are not available)
- {AUTO INCREMENT}
- Data validation (e.g. {NULL} constraint, uniqueness) (It has to be noted, that Cassandra does not read before writing. Any similar needs are not possible)
+Having a lot of updates and deletes interspersed with reads slow the system down due to the way of handling requests - mostly just appending data and not changeing records. This has affects on data validation as well. It is not possible to check on write for data uniqueness, constraints or auto increments. 
 
 To sump it up there are general Use-Case conditions where Cassandra is a great fit.
-Envornments with these needs should find a solution with Cassandra/
+In order to make an educated decision the following key-points should fit with the Use-Case and environment:
 \begin{itemize}
     \item Large Deployments
-    In order to make use of Cassandras features and benefits
     \item Tons of writes
+    \begin{itemize}
         \item{"high performance at high write volumes with many concurrent client threads"}
-
+    \end{itemize}
     \item Geographical distribution of data and database clients
     \item Different columns per row
 \end{itemize}
-Ingenuity, architecture and featureset limited when used as single-node
- Several nodes? $\rightarrow$ might be a fit
- Dozen of nodes? $\rightarrow$ great fit
-
-Consider read/write ratio
-As mentioned, cassandra optimized for write throughput
-Not many updates / data changes, slows read down
-Quote; you can even write to multiple nodes with multiple threads
-Globally deployed application, bring data to user
-Configure to replicate across multiple data centers
-Again: rows are sparse
 
 
 \section{Data Modelling in Cassandra}  % How to model data (or rather tables)
 
+Compared to other database systems like traditional relational database systems, data modelling is different in Cassandra. Here is a little example to understand they different way of thinking when modelling data for Cassandras wide column data store. \\
 
+\ref{fig:cassandra:model_data0} shows an example enity relationship diagramm of data in the context a hotel environment. The hotel has the attributes address, a phone, name and an id as unique primary key. Each hotel has certain amounts of rooms which store information themself and are connected to other entities.
 
-Data Modelling is different in Cassandra, compared to other Databases like traditional
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\columnwidth]{img/model_example_entity_relation_step0.png}
+    \caption{Example entity relation model \autocite{cassandra_oreilly}}
+    \label{fig:cassandra:model_data0}
+\end{figure}
+
+In \ref{fig:cassandra:model_data1} an example database model for an relational database of the erp from \ref{fig:cassandra:model_data0}.
+The connections and primary keys previously noted connect now the table to enable complex join queries over multiple tables later on.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\columnwidth]{img/model_example_rdbms_step1.png}
+    \caption{Example RDMBS normalization transition \autocite{cassandra_oreilly}}
+    \label{fig:cassandra:model_data1}
+\end{figure}
+
+The fundamental difference between those two modeling types is the starting point. In the example above it was all about what data has to be stored and how that data is connected to each other.
+In data modeling for Cassandra the queries are the starting points. This means for the architect to first think about queries the database system has to answer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\columnwidth]{img/model_example_queries_step2.png}
+    \caption{Planned queries against database system \autocite{cassandra_oreilly}}
+    \label{fig:cassandra:model_data2}
+\end{figure}
+
+\ref{fig:cassandra:model_data2} show this circumstance; queries the system has to answer later on. This diagramm describes a classical use-case for the hotel environment in which the database would come to work. A user searches for hotels, checks information about it and reserves it.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\columnwidth]{img/model_example_chebotko_step3.png}
+    \caption{Model and denormalize tables to fit queries \autocite{cassandra_oreilly}}
+    \label{fig:cassandra:model_data3}
+\end{figure}
+
+Transitioning to the collection of queries in \ref{fig:cassandra:model_data2} to accessible tables can be seen in \ref{fig:cassandra:model_data3}.
+
 
 \section{Using the Cassandra Query Language}  % How to use CQL
 This section will give a short overview of how to interact with a Cassandra database using the Cassandra Query Language (CQL), which is mainly inspired by the Structured Query Language (SQL) \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateKeystore}.
