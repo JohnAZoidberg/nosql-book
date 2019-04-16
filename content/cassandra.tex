@@ -497,6 +497,10 @@ The first node of a cluster can be thought of as such a single instance node unt
 In order for additional nodes to join the cluster configure them analogous to the first, changing the address values but keeping the seed list.
 Upon starting them they will automatically communicate with the seed and join the cluster.
 
+\paragraph{More configuration} Cassandra has many more parameters that we are not going to mention here. They can be used to adjust everything from performance tuning, architectural changes or increasing security.
+To use virtual nodes explained in paragraph \ref{sec:CassandraClusterArchitecture} and give a node more than a single token the \texttt{num\_tokens} parameter can be used.
+In its default configuration Cassandra claims a few gigabytes of memory. On dedicated Cassandra nodes you would probably want to increase it to fully utilize the hardware. However for testing purposes you do not want it to consume a big chunk of your memory. Our experience has shown that Cassandra does not like being given too little memory and is prone to crashing if that happens. To adjust how much memory Cassandra uses the \texttt{MAX\_HEAP\_SIZE} and \texttt{HEAP\_NEWSIZE} variables in \texttt{/etc/cassandra/casandra-env.sh} can bet set.
+
 \section{Summary and Conclusion}
 %- Summary, most important parts (results)
 %- Limitations => Future research
