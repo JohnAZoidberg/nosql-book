@@ -29,12 +29,7 @@ Here is an overview: \\
             & Several clusters with \textbf{1000+ nodes each!} \autocite{cassandra_apple} \\
   \end{tabular}
 
-This shows that Cassandra is heavily used in big production environments of famous and leading tech companies. The significance of Cassandra and the problems it solves is, with ever growing amounts of data, high.
-
-
-
-Scope: TODO \\
-Cassandra can be made aware of the relative physical location of all nodes, for example in which rack or data center they are. For real world usage it is recommended to do that and also adjust the configuration to take that into account. For trying out Cassandra on a single node or a small local cluster however all of those settings can be left at their defaults. To keep this chapter at a manageable size we will not explain the opological features, only mention that they are available.
+This shows that Cassandra is heavily used in big production environments of famous and leading tech companies. The significance of Cassandra and the problems it solves is, with an ever growing amount of data, high. Furthermore the implications and the way that Cassandra can be made aware of the relative physical location of all nodes, for example in which rack or data center they are will be assessed. This chapter will be wrapped up with instructions and hints for trying out Cassandra on a single node or a small local cluster. To keep this chapter at a manageable size we will not explain the topological features, only mention that they are available.
 
 \subsection{Abstract}
 \subsection{Overview of Cassandra}
@@ -547,5 +542,6 @@ In its default configuration Cassandra claims a few gigabytes of memory. On dedi
     
 This chapter gave an overview about what Cassandra is, when to use it and detailed insights on how to use it and its architecture. It has shown that Cassandra is a complex database system with unique benefits compared to other database systems. It solves a lot of problems that come with big data environments. Due to its uniqueness it has to be assessed very carefully whether Cassandra is a fit for a certain environment or not. Although it comes with major benefits and extra features, some expected features and base assumptions about a database system are different in Cassandra. 
 It could be seen, that it is a great fit for lots of fast writes environments but comes short in OLTP environments where traditional RDMBS databases shine.
+During the work on this chapter and the learning phase about Cassandra, it showed how detail rich and complex the solutions this distributed database storage brings with is. To truly understand Cassandra in all its different settings, possibilities and to be able to setup, run and maintain a production ready big sized cluster, more reading is needed. Especially the fine details how a Cluster will react in certain distress situations should be fully understood and can be assessed further.
 
 \cite{cassandra_paper}
