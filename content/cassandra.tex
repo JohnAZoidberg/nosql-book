@@ -150,7 +150,7 @@ This similarity start by looking into how the creation of a keyspace is performe
 \begin{verbatim}
 /* Create a new keyspace in CQL */
 CREATE KEYSPACE data WITH replication =
-\{'class': 'SimpleStrategy', 'replication_factor': 3\};
+    {'class': 'SimpleStrategy', 'replication_factor': 3};
 
 /* Create a new database in SQL */
 CREATE DATABASE data;
@@ -201,11 +201,11 @@ Important to note is that there is no interaction to update a data entry. The re
 \begin{verbatim}
 /* Inserting Data */
 INSERT INTO Person (lastname, name, email)
-VALUES ('Musterfrau', 'Maxi', 'maxi@gmail.com');
+  VALUES ('Musterfrau', 'Maxi', 'maxi@gmail.com');
 
 /* Updating Data */
 UPDATE Person SET email = 'maxi@gmail.com'
-WHERE lastname='Musterfrau' AND name = 'MAXI';
+  WHERE lastname='Musterfrau' AND name = 'MAXI';
 \end{verbatim}
 
 As getting and deleting data is also similar to SQL there is no need to go into it any further in this section \autocite{cqlAlexMeng, cassandra3cqldocSelect}:
