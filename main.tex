@@ -9,7 +9,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 
-\usepackage[hidelinks, pdfpagelabels]{hyperref}
+\usepackage[hidelinks, pdfpagelabels, pdfusetitle]{hyperref}
 \hypersetup{hypertexnames=false}
 \usepackage{enumitem}
 \usepackage{suffix}
@@ -33,6 +33,7 @@
 % Listings and drawings (needs to be loaded before csquotes)
 \usepackage{minted}
 \usepackage{tikz}
+\usetikzlibrary{intersections,arrows.meta}
 
 % Citation packages and options
 \usepackage{csquotes}
@@ -41,6 +42,8 @@
   style=apa
 ]{biblatex}
 \addbibresource{bibliography.bib}
+\addbibresource{cassandra.bib}
+
 \DeclareLanguageMapping{english}{english-apa}
 
 % Correct listing references
@@ -81,11 +84,11 @@
 \printglossaries
 
 \input{content/aa_test}
-
 \input{content/2_2_redis}
 \input{content/2_3_riak}
 \input{content/5_0_graph_db}
-
+\input{content/cassandra}
+\input{content/05_graphdb}
 
 \printbibliography
 
