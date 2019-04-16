@@ -9,7 +9,7 @@
 
 
 The following chapter aims to bring an overview into the Cassandra database system as well as detailed information about how it works and its architecture.
-A comprehensive introduction and suggestions on how Cassandra can help with big amounts of data and in which scenarios it is superior to relational databases and other database systems. After that a detailed guide on how to model data for Cassandra in order to make the best use out of the architecture will follow.
+After that, a detailed guide on how to model data for Cassandra in order to make the best use out of the architecture will follow.
 Transitioning into technical details and examples on how Cassandra works, what features and pitfalls it brings with it.
 
 
@@ -35,10 +35,8 @@ This shows that Cassandra is heavily used in big production environments of famo
 \subsection{Overview of Cassandra}
 Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elastically increase or decrease the cluster size without any major impact on the distributed system. This can be refereed to as elastic scalability. All these features make Cassandra highly available and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Theorem. More on that in section \ref{sec:CassandraClusterArchitecture}.
 
-Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved
-in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB.
-Currently (Apr/19) it is a free software project of the Apache Foundation. Development is mainly driven by DataStax.
-A company designated for commercial Cassandra use and enterprise support.
+Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB.
+Currently (Apr/19) it is a free software project of the Apache Foundation. Development is mainly driven by DataStax. A company designated for commercial Cassandra use and enterprise support.
 
 \section{Wide Column Store}
 
@@ -56,11 +54,10 @@ The naming can be explained as a key value store with wide (complex) values that
 
 \section{Use-Cases Cassandra}
 Cassandra comes with strong benefits over other database systems. These benefits and extra features make it miss some features which one might expect as standard in database systems.
-It should be carefully considers whether to use Cassandra or not since it is not the jack of all trades.
-One benefit of Cassandra is fast writes which means it can handle a high throughput but the latency might not be too short. These writes include the operations of {INSERT}, {UPDATE} and {DELETE}. 
-The way Cassandra handles those operations make them equal to a "regular" write operation. But more detail on that later on. Another key benefit is high availability. Due to its architecture and depending on the settings 
-a Cassandra setup can be highly available. Since one of the base assumptions of the distributed system is the expensiveness of inter-node communication, it has an linear horizontal scalability. 
-The communication between nodes does not increase with the size of node. Due to its distributed nature, the architecture does not rely on a master-slave setting and comes masterless. 
+It should be carefully considered whether to use Cassandra or not since it is not the jack of all trades.
+One benefit of Cassandra is fast writes which means it can handle a high throughput but the latency might not be too short. These writes include the operations of {INSERT}, {UPDATE} and {DELETE}.
+The way Cassandra handles those operations make them equal to a "regular" write operation. But more detail on that later on. Another key benefit is high availability. Due to its architecture and depending on the settings a Cassandra setup can be highly available. Since one of the base assumptions of the distributed system is the expensiveness of inter-node communication, it has an linear horizontal scalability.
+The communication between nodes does not increase with the size of node. Due to its distributed nature, the architecture does not rely on a master-slave setting and comes masterless.
 Furthermore it can be configured to work with several clusters, globally distributed, which makes for example multicloud Cassandra setups possible.
 This means that any client can read from and write to any node. As described previously Cassandra is a wide column store database which results in having a flexible schema where rows can have missing columns that are not stored on disk.
 Cassandra has an own query language which is similar SQL and called CQL (Cassandra Query Language). This makes it easier to use Cassandra if knowledge from SQL is available.
@@ -156,7 +153,8 @@ CREATE KEYSPACE data WITH replication =
 /* Create a new database in SQL */
 CREATE DATABASE data;
 \end{verbatim}
-Hereby the only difference is that instead of creating a Database a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter mean and how they should be used is explained later in Section \ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
+
+Hereby the only difference is that instead of creating a database, a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter mean and how they should be used is explained later in Section \ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
 
 \subsection{Creating a table}
 After creating a keyspace a table has to be created in order to hold the data. As a database is always part of a keyspace it is either necessary to specify the keyspace in every query or to simple scope every subsequent query into a given keyspace by using the USE query \autocite{cassandra3cqldocUse}:
@@ -518,7 +516,7 @@ start_native_transport: true
 
 For the masterless cluster to function all nodes need to be able to reach all other nodes. This is trivial if all are in the same subnet of the network. Then they can just reach each other by their IP addresses.
 When they are in different subnets however they each have a private (local to their subnet) and public (inter subnet) address. This is very often the case in public cloud offerings. There are just not enough addresses available to give every node a public one.
-Cassandra needs to know to things:
+Cassandra needs to know two things:
 1. On what address to listen for oncoming TPC connections. That's what \texttt{listen\_address} is for. This is the local/private address.
 2. What address to tell other nodes it's reachable under. This is set by \texttt{broadcast\_address} and it is the public address that all other nodes must be able to reach.
 Therefore in a local network (with no address translation between the nodes) \texttt{listen\_address} and \texttt{broadcast\_address} are set to the same value.
