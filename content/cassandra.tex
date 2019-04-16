@@ -156,7 +156,7 @@ CREATE KEYSPACE data WITH replication =
 /* Create a new database in SQL */
 CREATE DATABASE data;
 \end{verbatim}
-Hereby the only difference is that instead of creating a Database a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter meen and how they should be used is explained later in Section \ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
+Hereby the only difference is that instead of creating a Database a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter mean and how they should be used is explained later in Section \ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
 
 \subsection{Creating a table}
 After creating a keyspace a table has to be created in order to hold the data. As a database is always part of a keyspace it is either necessary to specify the keyspace in every query or to simple scope every subsequent query into a given keyspace by using the USE query \autocite{cassandra3cqldocUse}:
@@ -230,11 +230,12 @@ In order to perform the requested changed to the data they have to be written in
 In figure \ref{fig:cassandra:writeData} it can be seen that the write processe to cassadra involves three steps:
 \begin{enumerate}
 \item \textbf{Write to journal} Hereby the query is simple append to the journal on the disk, making it persistent even if the node goes down. As this action is a simple append it is very fast and leaves the data in a temporal order in the journal.
-\item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form the data will be written on disk,
-\item \textbf{Flush to disk when memtable is too big} This allows to simple flush the data and some metadata to the disk when it gets to big for the memory to hold it. Hereby a new data file is created, not touching any of the previously written files, making this action also quite fast as no lookups have to be performed. It is performed in a parallel fashion and does not impact incoming requests.
+\item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form the data will be written on disk. Here it is important that only the required data is written if there are any columns not specified it will not be written to the memtable. In contrast to writing null to a column which will delete it by setting a tombstone on it (See Appendix \ref{appendix:cassandra:queryExample}).
+\item \textbf{Flush to disk when memtable is too big} This allows to simple flush the data and some metadata to the disk when it gets to big for the memory to hold it. Hereby a new data file is created, not touching any of the previously written files, making this action also quite fast as no lookups have to be performed.
+\item \textbf{Compacting written datafiles} As the writing to disk is only a append and will create a new datafile for every flush the whole database will be scattered around multiples with redundant data if entries were written after flushing them to disk. In order to merge these files it is possible to compact the files into one resulting in faster reads later \autocite{cassandraCompactTool}.
 \end{enumerate}
 
-After writing the data it also can be read again as shown by figure \ref{fig:cassandra:readData}:
+After writing the data it also can be read again \autocite{datastaxReadData}:
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.75\textwidth]{img/cassandra_local_read.png}
@@ -244,8 +245,8 @@ After writing the data it also can be read again as shown by figure \ref{fig:cas
 \begin{enumerate}
     \item \textbf{Check caches} First the last query cache will be checked. Returning the data right away if it was requested in the near past.
     \item \textbf{Check memtable} Afterwards the memtable will be checked if it has recent activities on the requested data.
-    \item \textbf{Find SSTable and location} If no entry was found in the memtable the data on disk will be checked by firstly determining in which memtable dump the dataset will be and then retriving it from there.
-    \item \textbf{Merge with memtable} If it was necessary to retrieve the data from disk the data will be written to the memtable to allow later queries on the same data to succeed erlier.
+    \item \textbf{Find SSTable and location} If no entry was found in the memtable the data on disk will be checked by firstly determining in which memtable dump the dataset will be and then retrieving it from there. For a detailed overview of this take a look at figure \ref{fig:cassandra:readData}
+    \item \textbf{Merge with memtable} If it was necessary to retrieve the data from disk the data will be written to the memtable to allow later queries on the same data to succeed earlier.
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
