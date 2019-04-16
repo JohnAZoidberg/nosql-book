@@ -311,7 +311,7 @@ It is recommened to use this strategy in production, unless all nodes are in a s
 
 When a new node is added or a node is removed it is likely that the distribution of nodes on the ring becomes imbalanced. When the ring is imbalanced nodes are responsible for different amounts of data and experience different amounts of load. Since nodes are recommended to be of the same performance level\footnote{Or be balanced by dividing them up into virtual nodes according to performance} this is not optimal. Some nodes are overloaded and others underuntilized.
 To balance the ring the nodes are moved to equidistant positions on the ring. When this happens data is bound to be assigned to a new owner node - that data will be moved.
-TODO talk about consistent hashing
+The hash function used to transform partition key into is a so colled \textit{consistent hash function}. The difference from a regular (cryptographically secure) hash function is that the output wraps around and thus can be represented as a ring. It also has the property that it minimizes the amount of shifting data that is necessary when a node is added or removed.
 % TODO: Cite a consistent hashing paper
 
 Figure \ref{fig:cassandra:rebalancing} visualizes an imbalanced ring and how the green nodes can be repositioned.
@@ -322,16 +322,16 @@ Figure \ref{fig:cassandra:rebalancing} visualizes an imbalanced ring and how the
   \begin{tikzpicture}
     % Circle
     \fill[fill=black!25] (2.5, 0) arc (0:360:2.5);
-    \node[circle,fill=blue] at (180:2.5) {A};
-    \node[circle,fill=blue] at (0:2.5) {B};
-    \node[circle,fill=blue] at (-20:2.5) {C};
-    \node[circle,fill=blue] at (200:2.5) {D};
+    \node[circle,fill=cyan] at (180:2.5) {A};
+    \node[circle,fill=cyan] at (0:2.5) {B};
+    \node[circle,fill=cyan] at (-20:2.5) {C};
+    \node[circle,fill=cyan] at (200:2.5) {D};
 
     % Legend
     \begin{scope}[shift={(7,0)}]
       \fill[fill=black!25] (2.5, 0) arc (0:360:2.5);
-      \node[circle,fill=blue] at (180:2.5) {A};
-      \node[circle,fill=blue] at (0:2.5) {B};
+      \node[circle,fill=cyan] at (180:2.5) {A};
+      \node[circle,fill=cyan] at (0:2.5) {B};
       \node[circle,fill=green] at (270:2.5) {C};
       \node[circle,fill=green] at (90:2.5) {D};
     \end{scope}
@@ -393,9 +393,9 @@ Cassandra has a masterless architecture; no single node controls any particular 
 For one query that particular node becomes the \textit{coordinator node}; it coordinates the execution and distribution of that query.
 First it hashes the partition key of the data to obtains the token and finds the node responsible for it. By using the replication strategy it can find out which replicas are responsible for that data as well. \\
 When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update theid data, this is called a \textit{read\_repair}. \\
-When executing a write query the coordinator  TODO
+When executing a write query the coordinator sends the write request to all responsible replicas. If a replica is not currently available the coordinator logs the request and retries it later when the replica is back up  - this is called a \textit{hinted handoff}. After more than \texttt{Cl.write} replicas have responded that they successfully completed the write the client is given a successful response.
 
-Hinted Handoff: When the coordinator wants to write the data to one of the replicas which is currently unavailable
+For an explanation of the consistency levels \texttt{CL.read} and \texttt{CL.write} see section \ref{par:cassandra:consistency}.
 
 In short, the process looks like this:
 
@@ -464,10 +464,10 @@ When node 1 answers the default consistency level of \texttt{ONE} is satisfied a
   \label{fig:cassandra:replication}
 \end{figure}
 
-\paragraph{Tuning Consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
+\paragraph{Tuning Consistency} \label{par:cassandra:consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
 Because different applications have different requirements of availability and consistency Cassandra offers several screws to turn to adjust it's alignment on that spectrum.
 
-One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion.
+One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion. Consistency level for reading and writing are abbreviated as \texttt{CL.read} and x respectively.
 
 Cassandra offers these, but not limited to these, options.
 
@@ -491,7 +491,8 @@ We see that Cassandra by default Cassandra is highly available and only eventual
 
 \section{Setup and Configuration}  % Setup
 Cassandra is designed to be run in a cluster of multiple machines. That has to be kept in mind even when setting up a single instance. That single instance would form a single node cluster. This makes manual configuration unavoidable - every node needs to know how to join the cluster.
-For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about TODO. After joining the cluster is complete the distinction of \textit{seed nodes} is no longer relevant - all nodes are completely equal.
+For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about the state of the ring and the new node is assigned a place on the ring. After joining the cluster is complete and the distinction of \textit{seed nodes} is no longer relevant - all nodes are equally important.
+When a new node was added it is responsible for a chunk of the data the others were previously responsible for. They do not remove that, now unnecessary, data on their own - to do so run \texttt{nodetool cleanup} on each of the old nodes.
 
 A simple but sufficient\footnote{The other settings can be left at their defaults.} configuration of the first node would look like shown in listing~\ref{lst:cassandra:first_node_config}.
 
@@ -526,6 +527,10 @@ The first node of a cluster can be thought of as such a single instance node unt
 
 In order for additional nodes to join the cluster configure them analogous to the first, changing the address values but keeping the seed list.
 Upon starting them they will automatically communicate with the seed and join the cluster.
+
+\paragraph{More configuration} Cassandra has many more parameters that we are not going to mention here. They can be used to adjust everything from performance tuning, architectural changes or increasing security.
+To use virtual nodes explained in paragraph \ref{sec:CassandraClusterArchitecture} and give a node more than a single token the \texttt{num\_tokens} parameter can be used.
+In its default configuration Cassandra claims a few gigabytes of memory. On dedicated Cassandra nodes you would probably want to increase it to fully utilize the hardware. However for testing purposes you do not want it to consume a big chunk of your memory. Our experience has shown that Cassandra does not like being given too little memory and is prone to crashing if that happens. To adjust how much memory Cassandra uses the \texttt{MAX\_HEAP\_SIZE} and \texttt{HEAP\_NEWSIZE} variables in \texttt{/etc/cassandra/casandra-env.sh} can bet set.
 
 \section{Summary and Conclusion}
     %- Summary, most important parts (results)
