@@ -33,7 +33,7 @@ This shows that Cassandra is heavily used in big production environments of famo
 
 \subsection{Abstract}
 \subsection{Overview of Cassandra}
-Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elastically increase or decrease the cluster size without any major impact on the distributed system. This can be refereed to as elastic scalability. All these features make Cassandra highly available and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Theorem. More on that in section \ref{sec:CassandraClusterArchitecture}.
+Cassandra is a Wide Column Store Database. It is table-like but not relational. The architecture and design make it a distributed and masterless data store for large data. It is written in Java and can be run distributed on commodity hardware. Since it is masterless there is no single point of failure. Nodes (connected instances running Cassandra) can be hot-swapped or be temporarily down without affecting the availability of the Cassandra cluster. Adding a new node and removing one will elastically increase or decrease the cluster size without any major impact on the distributed system. This can be refereed to as elastic scalability. All these features make Cassandra highly available and fault tolerance. Depending on the settings, a cluster of Cassandra nodes can be more or less consistent. From eventually consistent, the lowest setting for consistency, to highly consistent. This can be referred to as tunable consistency and allows for a configuration dependent classification in the CAP Theorem. More on that in section~\ref{sec:CassandraClusterArchitecture}.
 
 Cassandra was originally developed by Facebook in 2008, the co-author of Amazons DynamoDB was involved in the development process. Hence Cassandra shares similarities with the architecture of DynamoDB.
 Currently (Apr/19) it is a free software project of the Apache Foundation. Development is mainly driven by DataStax. A company designated for commercial Cassandra use and enterprise support.
@@ -88,7 +88,7 @@ In order to make an educated decision the following key-points should fit with t
 
 Compared to other database systems like traditional relational database systems, data modeling is different in Cassandra. Here is a little example to understand the different way of thinking when modeling data for Cassandras wide column data store. \\
 
-\ref{fig:cassandra:model_data0} shows an example entity relationship diagram of data in the context of a hotel environment. The hotel has the attributes address, phone, name and an id as unique primary key. Each hotel has certain amounts of rooms which store information them-self and are connected to other entities.
+Figure~\ref{fig:cassandra:model_data0} shows an example entity relationship diagram of data in the context of a hotel environment. The hotel has the attributes address, phone, name and an id as unique primary key. Each hotel has certain amounts of rooms which store information them-self and are connected to other entities.
 
 \begin{figure}[H]
     \centering
@@ -97,7 +97,7 @@ Compared to other database systems like traditional relational database systems,
     \label{fig:cassandra:model_data0}
 \end{figure}
 
-In \ref{fig:cassandra:model_data1} an example database model for an relational database of the ERP from \ref{fig:cassandra:model_data0}.
+In figure~\ref{fig:cassandra:model_data1} an example database model for an relational database of the ERP from figure~\ref{fig:cassandra:model_data0}.
 The connections and primary keys previously noted connect now the table to enable complex join queries over multiple tables later on.
 
 \begin{figure}[H]
@@ -117,7 +117,7 @@ In data modeling for Cassandra the queries are the starting points. This means f
     \label{fig:cassandra:model_data2}
 \end{figure}
 
-\ref{fig:cassandra:model_data2} show this circumstance; queries the system has to answer later on. This diagram describes a classical use-case for the hotel environment in which the database would come to work. A user searches for hotels, checks information about it and reserves it.
+Figure~\ref{fig:cassandra:model_data2} show this circumstance; queries the system has to answer later on. This diagram describes a classical use-case for the hotel environment in which the database would come to work. A user searches for hotels, checks information about it and reserves it.
 
 \begin{figure}[H]
     \centering
@@ -126,12 +126,12 @@ In data modeling for Cassandra the queries are the starting points. This means f
     \label{fig:cassandra:model_data3}
 \end{figure}
 
-Transitioning to the collection of queries in \ref{fig:cassandra:model_data2} to accessible tables, can be seen in \ref{fig:cassandra:model_data3}. It can be seen that data is stored redundantly, available on multiple tables. This does not bother the modeling since queries later on will not use any sort of join operation and be limited onto one table request - which is precisely why data is stored in multiple tables. Each table fulfills one of the queries previously thought of. Furthermore since there is no reference integrity it is possible to store ids in tables but the database system does not provide any functionality to make use of and / or connect those ids.
+Transitioning to the collection of queries in figure~\ref{fig:cassandra:model_data2} to accessible tables, can be seen in figure~\ref{fig:cassandra:model_data3}. It can be seen that data is stored redundantly, available on multiple tables. This does not bother the modeling since queries later on will not use any sort of join operation and be limited onto one table request - which is precisely why data is stored in multiple tables. Each table fulfills one of the queries previously thought of. Furthermore since there is no reference integrity it is possible to store ids in tables but the database system does not provide any functionality to make use of and / or connect those ids.
 
 In order to properly graph and document this type of modeling, a uniform and new way was proposed to write down data modeling for Cassandra and other similar systems with same needs. \autocite{chebotko2015data}
-These diagrams are called Chebotko diagrams and include the way queries are planned. This can be seen in \ref{fig:cassandra:model_data2}. 
-Out of this table, the diagram can be concluded. Creating to each query an unique table with all necessary information. The arrows with the queries numbers (Q1, Q2 ..) will be kept to keep the context and relation to the previous diagram \ref{fig:cassandra:model_data3}
-This can be seen in a descriptive example section at \ref{fig:cassandra:chebotko}
+These diagrams are called Chebotko diagrams and include the way queries are planned. This can be seen in figure~\ref{fig:cassandra:model_data2}. 
+Out of this table, the diagram can be concluded. Creating to each query an unique table with all necessary information. The arrows with the queries numbers (Q1, Q2 ..) will be kept to keep the context and relation to the previous diagram (\ref{fig:cassandra:model_data3}).
+This can be seen in a descriptive example section around figure~\ref{fig:cassandra:chebotko}
 
 \begin{figure}[H]
     \centering
@@ -154,7 +154,7 @@ CREATE KEYSPACE data WITH replication =
 CREATE DATABASE data;
 \end{verbatim}
 
-Hereby the only difference is that instead of creating a database, a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter mean and how they should be used is explained later in Section \ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
+Hereby the only difference is that instead of creating a database, a keyspace is created and it is possible to specify which replication parameters should be used. What these parameter meen and how they should be used is explained later in section~\ref{sec:CassandraClusterArchitecture} \autocite{cqlAlexMeng}.
 
 \subsection{Creating a table}
 After creating a keyspace a table has to be created in order to hold the data. As a database is always part of a keyspace it is either necessary to specify the keyspace in every query or to simple scope every subsequent query into a given keyspace by using the USE query \autocite{cassandra3cqldocUse}:
@@ -225,7 +225,7 @@ In order to perform the requested changed to the data they have to be written in
     \caption{Writing data to Cassandra node \autocite{datastaxWriteData}}
     \label{fig:cassandra:writeData}
 \end{figure}
-In figure \ref{fig:cassandra:writeData} it can be seen that the write processe to cassadra involves three steps:
+In figure~\ref{fig:cassandra:writeData} it can be seen that the write processe to cassadra involves three steps:
 \begin{enumerate}
 \item \textbf{Write to journal} Hereby the query is simple append to the journal on the disk, making it persistent even if the node goes down. As this action is a simple append it is very fast and leaves the data in a temporal order in the journal.
 \item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form the data will be written on disk. Here it is important that only the required data is written if there are any columns not specified it will not be written to the memtable. In contrast to writing null to a column which will delete it by setting a tombstone on it (See Appendix \ref{appendix:cassandra:queryExample}).
@@ -233,7 +233,8 @@ In figure \ref{fig:cassandra:writeData} it can be seen that the write processe t
 \item \textbf{Compacting written datafiles} As the writing to disk is only a append and will create a new datafile for every flush the whole database will be scattered around multiples with redundant data if entries were written after flushing them to disk. In order to merge these files it is possible to compact the files into one resulting in faster reads later \autocite{cassandraCompactTool}.
 \end{enumerate}
 
-After writing the data it also can be read again \autocite{datastaxReadData}:
+After writing the data it also can be read again as shown by figure~\ref{fig:cassandra:readData}:
+
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.75\textwidth]{img/cassandra_local_read.png}
@@ -248,7 +249,7 @@ After writing the data it also can be read again \autocite{datastaxReadData}:
 \end{enumerate}
 
 \section{Cluster Architecture}\label{sec:CassandraClusterArchitecture}  % How the cluster works
-Which node has a certain piece of data is not determined by a master server. Any node has the ability to determine where a particular piece of data is or must be stored just by hashing the partition key of a row. The result of that calculation is called a token. All nodes are placed somewhere on a \textit{token ring} (see figure \ref{fig:cassandra:tokenring}) and store the data of the tokens they're assigned to.
+Which node has a certain piece of data is not determined by a master server. Any node has the ability to determine where a particular piece of data is or must be stored just by hashing the partition key of a row. The result of that calculation is called a token. All nodes are placed somewhere on a \textit{token ring} (see figure~\ref{fig:cassandra:tokenring}) and store the data of the tokens they're assigned to.\autocite[2]{cassandra_paper} \autocite[209,210]{decandia2007dynamo}
 
 \newcommand{\Ray}{3cm}
 \begin{figure}[ht]
@@ -301,19 +302,18 @@ Which node has a certain piece of data is not determined by a master server. Any
 
 The tokens from the node's location to the next node belong to it. That means if the hashing of a partition key results in a token between 0 and 63 the data will be written to or read from node A. Keep in mind: This doesn't however mean that this node is \textit{in control} of that data - when replication is configured all replicas are equal. The node with that token is just the starting point to determine the first of the replicas.
 
-\paragraph{Replication} To ensure that all data continues to be available even if some nodes go down Cassandra replicates the data in the cluster. Replication can be defined for each keyspace when it is created. There is a simple strategy and a network topology aware strategy. \\
-The \texttt{SimpleStrategy} places the $n$ replicas of a piece of data on the next $n-1$\footnote{The first node that holds the data also counts as a replica.} nodes located clockwise on the ring after the node with the token. \\
+\paragraph{Replication} To ensure that all data continues to be available even if some nodes go down Cassandra replicates the data in the cluster. Replication can be defined for each keyspace when it is created. There is a simple strategy and a network topology aware strategy. \autocite{datastax_replication} \\
+The \texttt{SimpleStrategy} places the $n$ replicas of a piece of data on the next $n-1$\footnote{The first node that holds the data also counts as a replica.} nodes located clockwise on the ring after the node with the token. \autocite[3]{cassandra_paper} \\
 The \texttt{NetworkTopologyStrategy} strategy tries to be smart about the physical placement of replicas. It needs to be taught about in which datacenter and rack the nodes are located. To avoid losing data when an entire rack or datacenter fails this strategy prefers to spread it out.
-It is recommened to use this strategy in production, unless all nodes are in a single rack, where both strategies are equivalent.  % TODO cite datastax
+It is recommened to use this strategy in production, unless all nodes are in a single rack, where both strategies are equivalent.
 
 \paragraph{Rebalancing}
 
 When a new node is added or a node is removed it is likely that the distribution of nodes on the ring becomes imbalanced. When the ring is imbalanced nodes are responsible for different amounts of data and experience different amounts of load. Since nodes are recommended to be of the same performance level\footnote{Or be balanced by dividing them up into virtual nodes according to performance} this is not optimal. Some nodes are overloaded and others underuntilized.
-To balance the ring the nodes are moved to equidistant positions on the ring. When this happens data is bound to be assigned to a new owner node - that data will be moved.
-The hash function used to transform partition key into is a so colled \textit{consistent hash function}. The difference from a regular (cryptographically secure) hash function is that the output wraps around and thus can be represented as a ring. It also has the property that it minimizes the amount of shifting data that is necessary when a node is added or removed.
-% TODO: Cite a consistent hashing paper
+To balance the ring the nodes are moved to equidistant positions on the ring. When this happens data is bound to be assigned to a new owner node - that data will be moved. \autocite{datastax_balancing}
+The hash function used to transform partition key into is a so colled \textit{consistent hash function}. The difference from a regular (cryptographically secure) hash function is that the output wraps around and thus can be represented as a ring. It also has the property that it minimizes the amount of shifting data that is necessary when a node is added or removed. \autocite{karger1997consistent}
 
-Figure \ref{fig:cassandra:rebalancing} visualizes an imbalanced ring and how the green nodes can be repositioned.
+Figure~\ref{fig:cassandra:rebalancing} visualizes an imbalanced ring and how the green nodes can be repositioned.
 
 
 \begin{figure}[ht]
@@ -343,7 +343,7 @@ Nodes A and B can stay at their location, C and D are repositioned. C is moved f
 
 \paragraph{Virtual Nodes}
 
-By default each node is placed on the ring just once, when using virtual nodes they each can be placed on the node multiple times. This brings four advantages:
+By default each node is placed on the ring just once, when using virtual nodes they each can be placed on the node multiple times. This brings four advantages: \autocite{datastax_vnodes, yelp_balancing}
 
 \begin{itemize}
   \item Nodes can occupy a specified proportion of the ring
@@ -357,7 +357,7 @@ By default each node is placed on the ring just once, when using virtual nodes t
 3. When data partitioning was done poorly or the data happens to cluster around a particular token range the node responsible for that data receives disproportionately much load. Virtual nodes remedy that because they not only make the individual partitions smaller but they also make any single note responsible for multiple areas on the ring. \\
 4. When a node goes down and a replacement is brought up. This replacement needs the data of the node it replaced. If the replication factor is three it needs data from three different partitions. Without virtual nodes this can come from up to $3\cdot(3-1)=6$ different replicas. When using virtul nodes the partitions the same amount of data is spread across more nodes and thus the replication can transfer data from more nodes at once. If each node is split into $k$ virtual nodes it can replicate from $k$ times more replicas.
 
-See figure \ref{fig:cassandra:vnodes} for a visualization.
+See figure~\ref{fig:cassandra:vnodes} for a visualization.
 
 \begin{figure}[ht]
   \centering
@@ -386,15 +386,15 @@ See figure \ref{fig:cassandra:vnodes} for a visualization.
   \label{fig:cassandra:vnodes}
 \end{figure}
 
-\subsection{Distributed writes and reads (CAP Theorem)}
+\subsection{Distributed writes and reads (CAP Theorem)} \label{subsec:cassandra:cap}
 
-Cassandra has a masterless architecture; no single node controls any particular piece of data\footnote{Unless explicitly configured to do so}. This brings with it that a client can run query against any node of the cluster. In practice the client determines, either by some heuristic of proximity/latency or a round-robin algorithm, which node to use.
+Cassandra has a masterless architecture; no single node controls any particular piece of data\autocite[5]{cassandra_paper}\footnote{Unless explicitly configured to do so}. This brings with it that a client can run query against any node of the cluster. In practice the client determines, either by some heuristic of proximity/latency or a round-robin algorithm, which node to use.
 For one query that particular node becomes the \textit{coordinator node}; it coordinates the execution and distribution of that query.
 First it hashes the partition key of the data to obtains the token and finds the node responsible for it. By using the replication strategy it can find out which replicas are responsible for that data as well. \\
-When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update theid data, this is called a \textit{read\_repair}. \\
-When executing a write query the coordinator sends the write request to all responsible replicas. If a replica is not currently available the coordinator logs the request and retries it later when the replica is back up  - this is called a \textit{hinted handoff}. After more than \texttt{Cl.write} replicas have responded that they successfully completed the write the client is given a successful response.
+When executing a read query the coordinator asks all replicas\footnote{A replica is every node responsible for that piece of data - the one determined by hashing as well as the others determined by replication strategy.} for the data. When more than \texttt{CL.read} replicas have answered the client is given an answer. When the replicas don't agree on the value of the data the client is sent the newest copy. Once all answers have come in the replicas with outdated information are sent a message on how to update theid data, this is called a \textit{read\_repair}. \autocite{cassandra_distributed_read} \\
+When executing a write query the coordinator sends the write request to all responsible replicas. If a replica is not currently available the coordinator logs the request and retries it later when the replica is back up  - this is called a \textit{hinted handoff}\autocite[6,7]{cassandraInCAPtheorem}. After more than \texttt{Cl.write} replicas have responded that they successfully completed the write the client is given a successful response. \autocite{cassandra_distributed_write}
 
-For an explanation of the consistency levels \texttt{CL.read} and \texttt{CL.write} see section \ref{par:cassandra:consistency}.
+For an explanation of the consistency levels \texttt{CL.read} and \texttt{CL.write} see section~\ref{subsec:cassandra:cap}.
 
 In short, the process looks like this:
 
@@ -463,12 +463,12 @@ When node 1 answers the default consistency level of \texttt{ONE} is satisfied a
   \label{fig:cassandra:replication}
 \end{figure}
 
-\paragraph{Tuning Consistency} \label{par:cassandra:consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a successful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
+\paragraph{Tuning Consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a successful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
 Because different applications have different requirements of availability and consistency Cassandra offers several screws to turn to adjust it's alignment on that spectrum.
 
 One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion. Consistency level for reading and writing are abbreviated as \texttt{CL.read} and x respectively.
 
-Cassandra offers these, but not limited to these, options.
+Cassandra offers these, but not limited to these, options. \autocite{datastax_consistency_level}
 
 \begin{itemize}
   \item \texttt{ALL} replicas
@@ -482,18 +482,18 @@ Cassandra offers these, but not limited to these, options.
 In addition to these levels Cassandra also offers others that also take into account how nodes are distributed into different datacenters. \\
 For each query, but usually an entire client session, the consistency level can be chosen.
 
-The \texttt{ALL} level yields the highest consistency. Only when all replicas have responded the response it given to the client. That means either all were updated or all were asked for their current dataset. That means there is no uncertainty about what the result is - all replicas must agree. The \texttt{ANY} consistency level is the
+The \texttt{ALL} level yields the highest consistency. Only when all replicas have responded the response it given to the client. That means either all were updated or all were asked for their current dataset. That means there is no uncertainty about what the result is - all replicas must agree. The \texttt{ANY} consistency level is the least consistent. The data does not have to be fully written in any SSTable, memtable or even commit log of a replica - a simple hinted handoff on the coordinator is enough. \autocite[6,7]{cassandraInCAPtheorem}
 
-\paragraph{Replication Factor} Whenever creating a keyspace you have to configure its replication strategy. Whatever strategy you choose you have to determine how often you want a piece of data to be replicated. If you go with the lowest possible value of 1 the failure of any node will cause data loss (read and write failures). Increasing the replication factor means that more nodes can fail while requests can still be properly responded to - this means increased availability. It will, however, also mean that the additional replicas can get out of sync, which lowers the consistency.
+\paragraph{Replication Factor} Whenever creating a keyspace you have to configure its replication strategy. Whatever strategy you choose you have to determine how often you want a piece of data to be replicated. If you go with the lowest possible value of 1 the failure of any node will cause data loss (read and write failures). Increasing the replication factor means that more nodes can fail while requests can still be properly responded to - this means increased availability. It will, however, also mean that the additional replicas can get out of sync, which lowers the consistency. \autocite[3]{cassandra_paper}
 
-We see that Cassandra by default Cassandra is highly available and only eventually consistent but it can be gradually tuned to being highly consistent and more susceptible to failure.
+We see that Cassandra by default Cassandra is highly available and only eventually consistent but it can be gradually tuned to being highly consistent and more susceptible to failure. \autocite[2,3]{cassandraInCAPtheorem}
 
 \section{Setup and Configuration}  % Setup
 Cassandra is designed to be run in a cluster of multiple machines. That has to be kept in mind even when setting up a single instance. That single instance would form a single node cluster. This makes manual configuration unavoidable - every node needs to know how to join the cluster.
 For the purpose of joining the cluster each node is configured with a list of \textit{seed nodes}. When starting up for the first time it asks those nodes about the state of the ring and the new node is assigned a place on the ring. After joining the cluster is complete and the distinction of \textit{seed nodes} is no longer relevant - all nodes are equally important.
 When a new node was added it is responsible for a chunk of the data the others were previously responsible for. They do not remove that, now unnecessary, data on their own - to do so run \texttt{nodetool cleanup} on each of the old nodes.
 
-A simple but sufficient\footnote{The other settings can be left at their defaults.} configuration of the first node would look like shown in listing~\ref{lst:cassandra:first_node_config}.
+A simple but sufficient\footnote{The other settings can be left at their defaults.} configuration of the first node would look like shown in listing~\ref{lst:cassandra:first_node_config}. \autocite{cassandra_config}
 
 \begin{listing}[ht]
   \begin{minted}{yaml}
@@ -528,8 +528,8 @@ In order for additional nodes to join the cluster configure them analogous to th
 Upon starting them they will automatically communicate with the seed and join the cluster.
 
 \paragraph{More configuration} Cassandra has many more parameters that we are not going to mention here. They can be used to adjust everything from performance tuning, architectural changes or increasing security.
-To use virtual nodes explained in paragraph \ref{sec:CassandraClusterArchitecture} and give a node more than a single token the \texttt{num\_tokens} parameter can be used.
-In its default configuration Cassandra claims a few gigabytes of memory. On dedicated Cassandra nodes you would probably want to increase it to fully utilize the hardware. However for testing purposes you do not want it to consume a big chunk of your memory. Our experience has shown that Cassandra does not like being given too little memory and is prone to crashing if that happens. To adjust how much memory Cassandra uses the \texttt{MAX\_HEAP\_SIZE} and \texttt{HEAP\_NEWSIZE} variables in \texttt{/etc/cassandra/casandra-env.sh} can bet set.
+To use virtual nodes explained in section~\ref{sec:CassandraClusterArchitecture} and give a node more than a single token the \texttt{num\_tokens} parameter can be used. \autocite{cassandra_config}
+In its default configuration Cassandra claims a few gigabytes of memory. On dedicated Cassandra nodes you would probably want to increase it to fully utilize the hardware. However for testing purposes you do not want it to consume a big chunk of your memory. Our experience has shown that Cassandra does not like being given too little memory and is prone to crashing if that happens. To adjust how much memory Cassandra uses the \texttt{MAX\_HEAP\_SIZE} and \texttt{HEAP\_NEWSIZE} variables in \texttt{/etc/cassandra/casandra-env.sh} can bet set. \autocite[281]{cassandra_oreilly}
 
 \paragraph{Setup Overview} Setting up a service in a cluster architecture can be daunting because it involves many different components that all need to interact with eachother. The following list gives an overview over the tasks that need to be done:
 
