@@ -13,11 +13,11 @@ After that, a detailed guide on how to model data for Cassandra in order to make
 Transitioning into technical details and examples on how Cassandra works, what features and pitfalls it brings with it.
 
 
-Many large companies and organizations have deployed many Cassandra clusters.
-Here is an overview: \\
+Many large companies and organizations have deployed Cassandra clusters.
+Here is an overview of exceptional cases: \\
 
  \begin{tabular}{@{}ll}
-   CERN    & Storage backend for ATLAS detector \autocite{cassandra_cern} \\
+   \gls{cern}    & Storage backend for \gls{atlas} detector \autocite{cassandra_cern} \\
    \hline
    Netflix & 2,500 nodes, 420 TB, over 1 trillion requests per day \\
            & Migrated from Oracle to Cassandra \autocite{cassandra_netflix} \\
@@ -63,14 +63,14 @@ The way Cassandra handles those operations make them equal to a "regular" write 
 The communication between nodes does not increase with the size of node. Due to its distributed nature, the architecture does not rely on a master-slave setting and comes masterless.
 Furthermore it can be configured to work with several clusters, globally distributed, which makes for example multicloud Cassandra setups possible.
 This means that any client can read from and write to any node. As described previously Cassandra is a wide column store database which results in having a flexible schema where rows can have missing columns that are not stored on disk.
-Cassandra has its own query language which is similar SQL and called CQL (Cassandra Query Language). This makes it easier to use Cassandra if knowledge from SQL is available.
+Cassandra has its own query language which is similar \gls{sql} and called \gls{cql}. This makes it easier to use Cassandra if knowledge from \gls{sql} is available.
 
 If any of these points apply to a project or Use-Case, Cassandra is probably a good fit.
 But to be sure it is even more important to rule out the cases where Cassandra is not a good fit.
 The following paragraph will describe limits of Cassandra. If the use-case needs any of those features, Cassandra will most likely not suffice to fulfill requirements.
 First, a single system instance with Cassandra should be avoided. Most of the features and benefits come with multiple node setups. Use-Cases which would need a dozen nodes seem to find a great fit with the distributed storage system.
 
-Equally important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. ACID transactions are not possible and tables are fine-tuned for pre defined queries. Those queries should be known early on and not change during use. It is not easily possible to change or extent those queries. Furthermore there are no relations between tables. It is possible to link, connect and reuse IDs but this has to be handled on client side, there are no operations on those IDs available. Additionally column aggregation operations such as GROUP BY are also not possible, since such operations would be very inefficient in a distributed wide column storage.
+Equally important is the way data has to be stored and accessed. Due to its architecture, data has to be modeled different in Cassandra. \acrshort{acid} transactions are not possible and tables are fine-tuned for pre defined queries. Those queries should be known early on and not change during use. It is not easily possible to change or extent those queries. Furthermore there are no relations between tables. It is possible to link, connect and reuse IDs but this has to be handled on client side, there are no operations on those IDs available. Additionally column aggregation operations such as \texttt{GROUP BY} are also not possible, since such operations would be very inefficient in a distributed wide column storage.
 
 Having a lot of updates and deletes interspersed with reads slow the system down due to the way of handling requests - just appending data, not changing records and merging them while reading. This has affects on data validation as well. It is not possible to check on write for data uniqueness, constraints or auto increments. \autocite{cassandra_oreilly}
 
@@ -145,7 +145,7 @@ This can be seen in a descriptive example section around figure~\ref{fig:cassand
 \end{figure}
 
 \section{Using the Cassandra Query Language} \label{sec:cassandra:cql} % How to use CQL
-This section will give a short overview of how to interact with a Cassandra database using the Cassandra Query Language (CQL), which is mainly inspired by the Structured Query Language (SQL) \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateKeystore}.
+This section will give a short overview of how to interact with a Cassandra database using \gls{cql}, which is mainly inspired by \gls{sql} \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateKeystore}.
 
 \subsection {Creating a keyspace}
 This similarity becomes clear by looking at how the creation of a keyspace is performed:
@@ -166,7 +166,7 @@ After creating a keyspace a table has to be created in order to hold the data. A
 USE data;
 \end{verbatim}
 
-Using this keyspace a table can be created using the same syntax as in SQL \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateTable}:
+Using this keyspace a table can be created using the same syntax as in \gls{sql} \autocite{cqlAlexMeng, newInCQL3, cassandra3cqldocCreateTable}:
 \begin{verbatim}
 CREATE TABLE groups (
    group_name varchar,
@@ -186,7 +186,7 @@ Hereby the only difference is how the primary key can be specified:
        |       |                |            |
 ((groupname, group_location), added_date, username)
 \end{verbatim}
-    \caption{Parts of a primary key specification in CQL \autocite{cqlPrimaryKeyDefinition}}
+    \caption{Parts of a primary key specification in \gls{cql} \autocite{cqlPrimaryKeyDefinition}}
     \label{fig:cassandra:primaryKeyDefinition}
 \end{figure}
 
@@ -201,7 +201,7 @@ In order to manipulate Cassandra only provides three possible methods \autocite{
 \end{itemize}
 All having in common that the entire primary key has to be specified in order to interact with the data. The only exception hereby is the getting of data where only the partition key has to be specified.
 
-Important to note is that there is no interaction to update a data entry. The reason for that is that as Cassandra is optimized for high write throughput is is very costly to read any data before writing. This means that the update and insert known from SQL will perform the same action on the data \autocite{cqlAlexMeng, newInCQL3}:
+Important to note is that there is no interaction to update a data entry. The reason for that is that as Cassandra is optimized for high write throughput is is very costly to read any data before writing. This means that the update and insert known from \gls{sql} will perform the same action on the data \autocite{cqlAlexMeng, newInCQL3}:
 \begin{verbatim}
 /* Inserting Data */
 INSERT INTO Person (lastname, name, email)
@@ -212,7 +212,7 @@ UPDATE Person SET email = 'jane@example.com'
   WHERE lastname='Doe' AND name = 'Jane';
 \end{verbatim}
 
-As getting and deleting data is also similar to SQL there is no need to go into it any further in this section \autocite{cqlAlexMeng, cassandra3cqldocSelect}:
+As getting and deleting data is also similar to \gls{sql} there is no need to go into it any further in this section \autocite{cqlAlexMeng, cassandra3cqldocSelect}:
 \begin{verbatim}
 /* Selecting Data */
 SELECT * FROM Person
@@ -234,7 +234,7 @@ In order to perform the requested changed to the data they have to be written in
 In figure~\ref{fig:cassandra:writeData} it can be seen that the write process to Cassandra involves three steps:
 \begin{enumerate}
 \item \textbf{Write to journal} Hereby the query is simple append to the journal on the disk, making it persistent even if the node goes down. As this action is a simple append it is very fast and leaves the data in a temporal order in the journal.
-\item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form in which the data will be written on disk. Here it is important that only the required data is written if there are any columns not specified it will not be written to the memtable. In contrast to writing \textit{null} to a column which will delete it by setting a tombstone on it (See Appendix \ref{appendix:cassandra:queryExample}).
+\item \textbf{Write to memtable} After writing to the journal the change is performed in the memtable putting the data into a Sorted String Table (SSTable). This form is the same form in which the data will be written on disk. Here it is important that only the required data is written if there are any columns not specified it will not be written to the memtable. In contrast to writing \texttt{NULL} to a column which will delete it by setting a tombstone on it (See Appendix \ref{appendix:cassandra:queryExample}).
 \item \textbf{Flush to disk when memtable is too big} This allows to simply flush the data and some metadata to the disk when it gets to big for the memory to hold it. Hereby a new data file is created, not touching any of the previously written files, making this action also quite fast as no lookups have to be performed.
 \item \textbf{Compacting written datafiles} As writing to disk is only an append and will create a new datafile for every flush, the whole database will be scattered over multiple files with redundant data if entries were written after flushing them to disk. In order to merge these files it is possible to compact the files into one resulting in faster reads later \autocite{cassandraCompactTool}.
 \end{enumerate}
