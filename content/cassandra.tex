@@ -13,8 +13,8 @@ A comprehensive introduction and suggestions on how Cassandra can help with big 
 Transitioning into technical details and examples on how Cassandra works, what features and pitfalls it brings with it.
 
 
-Many large companies and organizations have deployed many sizeable Cassandra clusters. 
-Here is an overview:
+Many large companies and organizations have deployed many Cassandra clusters. 
+Here is an overview: \\
 
   \begin{tabular}{@{}ll}
     \hline
@@ -26,7 +26,7 @@ Here is an overview:
     eBay    & 6 billion writes and 5 billion reads daily \\
             & Single Cassandra table of 40TB \autocite{cassandra_ebay, cassandra_ebay2} \\
     \hline
-    Apple   & >75k Cassandra nodes with \textbf{10PB} in production \\
+    Apple   & more than 75k Cassandra nodes with \textbf{10PB} in production \\
             & Several clusters with \textbf{1000+ nodes each!} \autocite{cassandra_apple} \\
     \hline
   \end{tabular}
@@ -52,6 +52,14 @@ A company designated for commercial Cassandra use and enterprise support.
 A wide column store is a tabular but not relational approach to store data. It is not column oriented, since the rows are stored together. A row can have missing columns which are not stored on disk. This makes it sparse.
 It can be thought like a key-value store where the value can have a subset of a predefined set of columns. Or, put in other words; "Sparse, distributed multi-dimensional sorted map" \cite{chang2008bigtable}
 The naming can be explained as a key value store with wide (complex) values that consist of columns.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\columnwidth]{img/wide_column_store.png}
+    \caption{Example entity relation model \autocite{wideColumnGraphic}}
+    \label{fig:cassandra:wide_column}
+\end{figure}
+
 
 \section{Use-Cases Cassandra}
 Cassandra comes with strong benefits over other database systems. These benefits and extra features make it miss some features which one might expect as standard in database systems.
@@ -463,7 +471,7 @@ When node 1 answers the default consistency level of \texttt{ONE} is satisfied a
   \label{fig:cassandra:replication}
 \end{figure}
 
-\paragraph{Tuning Consistency} \label{par:cassandra:consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a sucessful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
+\paragraph{Tuning Consistency} \label{par:cassandra:consistency} By default writes and reads need to be acknowledged by only a single replica. Usually data is configured to be replicated over multiple nodes. The result is that queries to Cassandra are highly available - any particular node can fail and the request will receive a successful response. This comes at the cost that not all replicas always have the same data - a lack of consistency. \\
 Because different applications have different requirements of availability and consistency Cassandra offers several screws to turn to adjust it's alignment on that spectrum.
 
 One of those is the consistency level. As previously mentioned in this section it determines how many nodes have to acknowledge a request until enough nodes have acknowledged completion. Consistency level for reading and writing are abbreviated as \texttt{CL.read} and x respectively.
@@ -539,7 +547,7 @@ In its default configuration Cassandra claims a few gigabytes of memory. On dedi
     %- Discussion
     %- Conclusion
     
-This chapter gave an overview about what Cassandra is, when to use it and detailed insights on how to use it and its architecture. It has shown that Cassandra is a complex database system with unique benefits compared to other datatabase systems. It solves a lot of problems that come with big data environments. Due to its uniqueness it has to be assessed very carefully whether Cassandra is a fit for a certain environment or not. Although it comes with major benefits and extra features, some expected features and base assumptions about a database system are different in Cassandra. 
-It could be seen, that it is a great fit for lots of fast writes environments but comes short in OLTP environments where traditional RDMBS datbases shine.
+This chapter gave an overview about what Cassandra is, when to use it and detailed insights on how to use it and its architecture. It has shown that Cassandra is a complex database system with unique benefits compared to other database systems. It solves a lot of problems that come with big data environments. Due to its uniqueness it has to be assessed very carefully whether Cassandra is a fit for a certain environment or not. Although it comes with major benefits and extra features, some expected features and base assumptions about a database system are different in Cassandra. 
+It could be seen, that it is a great fit for lots of fast writes environments but comes short in OLTP environments where traditional RDMBS databases shine.
 
 \cite{cassandra_paper}
