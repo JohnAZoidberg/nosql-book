@@ -539,7 +539,7 @@ In its default configuration Cassandra claims a few gigabytes of memory. On dedi
 
 \paragraph{Setup Overview} Setting up a service in a cluster architecture can be daunting because it involves many different components that all need to interact with eachother. The following list gives an overview over the tasks that need to be done:
 
-1. Acquire enough capable nodes. DataStax the main contributor to Cassandra recommends to use at least 3 nodes, 8 cores, 32GB \\  % TODO cite
+1. Acquire enough capable nodes. DataStax the main contributor to Cassandra recommends to use at least 3 nodes, 8 cores and 32GB of RAM \autocite{casandra_apache_hardware} \\
 2. Set up a network between the nodes so that each one has a unique IP address and every node can reach every other node.\footnote{Multiple nodes behind a single NATed public IP is not possible because Cassandra allows only configuration of the broadcast IP but not the port} \\
 3. Adapt the configuration files like shown above \\
 4. Open the necessary port in the firewall: TCP/7000 for node to node communication (\texttt{storage\_port}) and TCP/9042 for client to node communication (\texttt{native\_storage\_port}). \\
